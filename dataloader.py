@@ -1,0 +1,259 @@
+import os
+import sys
+
+import torch
+import torch.utils.data as data
+
+import numpy as np
+from PIL import Image
+import glob
+import random
+import cv2
+
+random.seed(1143)
+
+
+def populate_train_list(orig_images_path):
+
+	tmp_img_name = []
+	image_list_orig = glob.glob(orig_images_path + "*.jpg")
+	for image in image_list_orig:
+		image = image.split("/")[-1]
+		tmp_img_name.append(image)
+
+	train_keys = []
+	val_keys = []
+	len_img = len(tmp_img_name)
+	for i in range(len_img):
+		if i<len_img*9/10:
+			train_keys.append(tmp_img_name[i])
+		else:
+			val_keys.append(tmp_img_name[i])
+
+
+	train_list = []
+	val_list = []
+	for train_image in train_keys:
+		train_list.append(orig_images_path + train_image)
+	for valid_image in val_keys:
+		val_list.append(orig_images_path + valid_image)
+
+	# 亂序
+	random.shuffle(train_list)
+	random.shuffle(val_list)
+
+	return train_list, val_list
+
+def GetRGB(Img):
+	mode = Img.mode
+	if mode == 'RGBA':
+		r, g, b, a = Img.split()
+
+	elif mode == 'RGB':
+		r, g, b = Img.split()
+
+
+	return r, g, b
+
+
+def RGBToYUV(data_orig,bk_w,bk_h):
+
+	R,G,B=GetRGB(data_orig)
+	width = data_orig.width
+	height = data_orig.height
+
+	R = np.reshape(list(R.getdata()), (height, width))
+	G = np.reshape(list(G.getdata()), (height, width))
+	B = np.reshape(list(B.getdata()), (height, width))
+
+	list_yuv444 = []
+	list_yuv420 = []
+	# original
+	index_bk = 0
+	for i in range(0, height, bk_h):
+		for j in range(0, width, bk_w):
+
+			# blocks
+			# ------------------------------------------#
+			# 二維
+			im_new_Y_Blk = np.full((bk_h, bk_w), np.inf)
+			im_new_U_Blk = np.full((bk_h, bk_w), np.inf)
+			im_new_V_Blk = np.full((bk_h, bk_w), np.inf)
+
+			y_blk = 0
+			x_blk = 0
+			for y in range(i, i + bk_h):
+				for x in range(j, j + bk_w):
+
+					# if not enough one block ... (跳掉)
+					# --------------------------#
+					if i + bk_h > height or j + bk_w > width:
+						continue
+					# --------------------------#
+
+					# Get value
+					# --------------------------#
+					index_all = y * bk_w + x;
+					r = R[y][x]
+					g = G[y][x]
+					b = B[y][x]
+					# --------------------------#
+
+					# Block Setting
+					# --------------------------#
+					im_new_Y_Blk[y_blk, x_blk] = int(0.299 * r + 0.587 * g + 0.114 * b)
+					im_new_U_Blk[y_blk, x_blk] = int(-0.147 * r + -0.289 * g + 0.436 * b)
+					im_new_V_Blk[y_blk, x_blk] = int(0.615 * r + -0.515 * g + -0.100 * b)
+					# --------------------------#
+
+					x_blk = x_blk + 1
+				y_blk = y_blk + 1
+				x_blk = 0
+			# ------------------------------------------#
+
+			step_x = 2
+			step_y = 2
+
+			im_new_U_Blk_Ori = im_new_U_Blk.copy()
+			im_new_V_Blk_Ori = im_new_V_Blk.copy()
+
+			# 420平均
+			for y in range(0, bk_h, step_y):
+				for x in range(0, bk_w, step_x):
+					# 存成一組
+					mean_U = np.mean(im_new_U_Blk[y:y + step_y, x:x + step_x])
+					mean_V = np.mean(im_new_V_Blk[y:y + step_y, x:x + step_x])
+
+					im_new_U_Blk[y:y + step_y, x:x + step_x].fill(mean_U)
+					im_new_V_Blk[y:y + step_y, x:x + step_x].fill(mean_V)
+
+			# 三維
+			# 422
+			#Array_blk_420 = [im_new_Y_Blk, im_new_U_Blk, im_new_V_Blk]
+			#yuv_420.append(Array_blk_420)
+			#yuv_420 = np.append(im_new_Y_Blk,im_new_U_Blk,im_new_V_Blk,axis=0)
+			yuv_444 = np.zeros(shape=(3, bk_h, bk_w))
+			yuv_420 = np.zeros(shape=(3, bk_h, bk_w))
+
+			yuv_420[0]=im_new_Y_Blk
+			yuv_420[1]=im_new_U_Blk
+			yuv_420[2]=im_new_V_Blk
+			list_yuv420.append(yuv_420)
+
+			# 444
+			#Array_blk_444 = [im_new_Y_Blk,im_new_U_Blk_Ori, im_new_V_Blk_Ori]
+			#yuv_444.append(Array_blk_444)
+			#yuv_444 = np.append(im_new_Y_Blk,im_new_U_Blk_Ori, im_new_V_Blk_Ori, axis=0)
+			#yuv_444 = np.append(im_new_Y_Blk,im_new_U_Blk_Ori,axis=0)
+			#yuv_444 = np.append(yuv_444,im_new_V_Blk_Ori,axis=0)
+			yuv_444[0]=im_new_Y_Blk
+			yuv_444[1]=im_new_U_Blk_Ori
+			yuv_444[2]=im_new_V_Blk_Ori
+			list_yuv444.append(yuv_444)
+
+			index_bk +=1
+			if index_bk == 1:
+				aaa=0
+			elif index_bk == 5:
+				aaa=0
+			elif index_bk == 50:
+				aaa=0
+
+
+	return list_yuv444,list_yuv420
+
+
+def RGBToYUV420(data_dehazy,width_bk,height_bk):
+	R, G, B = GetRGB(data_dehazy)
+	return data
+	
+
+class dehazing_loader(data.Dataset):
+
+	def __init__(self, orig_images_path, mode='train'):
+
+		self.train_list, self.val_list = populate_train_list(orig_images_path)
+
+		if mode == 'train':
+			self.data_list = self.train_list
+			print("Total training examples:", len(self.train_list))
+		else:
+			self.data_list = self.val_list
+			print("Total validation examples:", len(self.val_list))
+
+
+
+
+
+		
+
+	def __getitem__(self, index):
+
+		data_orig_path = self.data_list[index]
+		# load image
+		data_orig = Image.open(data_orig_path)
+		data_orig = data_orig.resize((480, 640), Image.ANTIALIAS)
+
+
+		'''
+		data_orig = (np.asarray(data_orig)/255.0)
+
+		data_orig = torch.from_numpy(data_orig).float()
+
+		data_orig = data_orig.permute(2, 0, 1)
+
+		return data_orig
+		'''
+		# data_orig to yuv444, yuv420
+		data_yuv444 ,data_yuv420 = RGBToYUV(data_orig,32,32)
+		list_tensor_yuv444 = []
+		list_tensor_yuv420 = []
+		for yuv444 in data_yuv444:
+			list_tensor_yuv444.append(torch.from_numpy(yuv444).float())
+		for yuv420 in data_yuv420:
+			list_tensor_yuv420.append(torch.from_numpy(yuv420).float())
+
+		#
+
+
+		return list_tensor_yuv444 ,list_tensor_yuv420
+
+
+
+
+
+		#ori-process
+		'''
+		data_hazy = Image.open(data_hazy_path)
+		#
+
+		# ori-process
+		# resize to 640*480 + 平滑filter
+		data_orig = data_orig.resize((480,640), Image.ANTIALIAS)
+		data_hazy = data_hazy.resize((480,640), Image.ANTIALIAS)
+		#
+		data_orig = np.asarray(data_orig)
+		data_hazy = np.asarray(data_hazy)
+		#
+		data_orig = (data_orig / 255.0)
+		data_hazy = (data_hazy / 255.0)
+
+		data_orig = torch.from_numpy(data_orig).float()
+		data_hazy = torch.from_numpy(data_hazy).float()
+
+		data_orig = data_orig.permute(2, 0, 1)
+		data_hazy = data_hazy.permute(2, 0, 1)
+
+		return data_orig, data_hazy
+
+
+		'''
+
+		#data_orig = (np.asarray(data_orig)/255.0)
+		#data_hazy = (np.asarray(data_hazy)/255.0)
+		#		return data_orig.permute(2,0,1), data_hazy.permute(2,0,1)
+
+
+	def __len__(self):
+		return len(self.data_list)
+
