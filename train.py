@@ -104,7 +104,7 @@ def train(config):
 
                 optimizer.zero_grad()
                 loss.backward()
-                torch.nn.utils.clip_grad_norm(dehaze_net.parameters(),config.grad_clip_norm)
+                torch.nn.utils.clip_grad_norm_(dehaze_net.parameters(),config.grad_clip_norm)
                 optimizer.step()
 
             if ((iteration+1) % config.display_iter) == 0:
