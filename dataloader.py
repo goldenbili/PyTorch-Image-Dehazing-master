@@ -180,11 +180,6 @@ class dehazing_loader(data.Dataset):
 		else:
 			self.data_list = self.val_list
 			print("Total validation examples:", len(self.val_list))
-
-
-
-
-
 		
 
 	def __getitem__(self, index):
@@ -204,22 +199,28 @@ class dehazing_loader(data.Dataset):
 
 		return data_orig
 		'''
+
 		# data_orig to yuv444, yuv420
 		data_yuv444 ,data_yuv420 = RGBToYUV(data_orig,32,32)
 		list_tensor_yuv444 = []
 		list_tensor_yuv420 = []
 		for yuv444 in data_yuv444:
+			yuv444 = (np.asarray(yuv444)/255.0)
+
+
 			list_tensor_yuv444.append(torch.from_numpy(yuv444).float())
 		for yuv420 in data_yuv420:
-			list_tensor_yuv420.append(torch.from_numpy(yuv420).float())
+			yuv420 = (np.asarray(yuv420) / 255.0)
+			yuv420 = torch.from_numpy(yuv420).float()
+			yuv420 = yuv420.permute(2, 0, 1)
+			list_tensor_yuv420.append(yuv420)
+
+			#list_tensor_yuv420.append(torch.from_numpy(yuv420).float())
 
 		#
 
 
 		return list_tensor_yuv444 ,list_tensor_yuv420
-
-
-
 
 
 		#ori-process

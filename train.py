@@ -62,13 +62,8 @@ def train(config):
 
     for epoch in range(config.num_epochs):
         for iteration, (img_orig, img_haze) in enumerate(train_loader):
-            # train stage
-            if use_gpu:
-                img_orig = img_orig.cuda()
-                img_haze = img_haze.cuda()
-
-            list_image = []
             '''
+            list_image = []
             # 300
             for i in range(len(img_orig)):
                 unit_img_orig = img_orig[i].cpu().detach().numpy()
@@ -98,6 +93,10 @@ def train(config):
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
+                # train stage
+                if use_gpu:
+                    unit_img_orig = unit_img_orig.cuda()
+                    unit_img_haze = unit_img_haze.cuda()
 
                 clean_image = dehaze_net(unit_img_haze)
 
@@ -152,7 +151,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Input Parameters
-    parser.add_argument('--orig_images_path', type=str, default="data/images/")
+    parser.add_argument('--orig_images_path', type=str, default="test_images/")
     #parser.add_argument('--hazy_images_path', type=str, default="data/data/")
     parser.add_argument('--lr', type=float, default=0.0001)
     parser.add_argument('--weight_decay', type=float, default=0.0001)
