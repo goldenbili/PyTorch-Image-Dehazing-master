@@ -206,13 +206,12 @@ class dehazing_loader(data.Dataset):
 		list_tensor_yuv420 = []
 		for yuv444 in data_yuv444:
 			yuv444 = (np.asarray(yuv444)/255.0)
+			yuv444 = torch.from_numpy(yuv444).float()
+			list_tensor_yuv444.append(yuv444)
 
-
-			list_tensor_yuv444.append(torch.from_numpy(yuv444).float())
 		for yuv420 in data_yuv420:
 			yuv420 = (np.asarray(yuv420) / 255.0)
 			yuv420 = torch.from_numpy(yuv420).float()
-			yuv420 = yuv420.permute(2, 0, 1)
 			list_tensor_yuv420.append(yuv420)
 
 			#list_tensor_yuv420.append(torch.from_numpy(yuv420).float())

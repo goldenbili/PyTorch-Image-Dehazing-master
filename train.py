@@ -113,15 +113,17 @@ def train(config):
                 torch.save(dehaze_net.state_dict(), config.snapshots_folder + "Epoch" + str(epoch) + "_" + str(index) + '.pth')
 
         # Validation Stage
+        sub_image_list = []
         for iter_val, (img_orig, img_haze) in enumerate(val_loader):
-            if use_gpu:
-                img_orig = img_orig.cuda()
-                img_haze = img_haze.cuda()
-
-            sub_image_list = []
             for index in range(len(img_orig)):
-                clean_image = dehaze_net(img_haze)
-                #TODO:20201130 :拼圖
+                unit_img_orig = img_orig[index]
+                unit_img_haze = img_haze[index]
+                # train stage
+                if use_gpu:
+                    unit_img_orig = unit_img_orig.cuda()
+                    unit_img_haze = unit_img_haze.cuda()
+
+                clean_image = dehaze_net(unit_img_haze)
                 sub_image_list.append(clean_image)
 
             image_all = np.concatenate(sub_image_list[:32],1)
@@ -129,10 +131,6 @@ def train(config):
                 index = i*32
                 image_row = np.concatenate(sub_image_list[index:index+32],0)
                 image_all = np.concatenate(image_all,image_row)
-
-
-
-
             #torchvision.utils.save_image(torch.cat((img_haze, clean_image, img_orig),0), config.sample_output_folder+str(iter_val+1)+".jpg")
 
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
