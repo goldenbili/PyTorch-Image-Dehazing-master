@@ -100,9 +100,9 @@ def train(config):
                     unit_img_haze = unit_img_haze.cuda()
                     
                 clean_image = dehaze_net(unit_img_haze)
-                print("index"+index)
-                print("size:"clean_images.size())
-                print("shape:"+clean_image.shape)
+                print("index" + index)
+                print("size:" + clean_image.size())
+                print("shape:" + clean_image.shape)
                 print(clean_image)
                 sub_image_list.append(clean_image)
 
