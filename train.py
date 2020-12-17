@@ -20,7 +20,6 @@ Willy:
 最後一層直接兩維輸出
 Q: loss function 的 Y 永遠是對的 這樣會不會影響訓練效果
 *try: 只做 UV 的 loss function ??
-
 進度：
 20101126
 1. net修改（o）
@@ -47,14 +46,15 @@ def train(config):
 
     dehaze_net.apply(weights_init)
 
-    #train_dataset = dataloader.dehazing_loader(config.orig_images_path,config.resize)
-    #val_dataset = dataloader.dehazing_loader(config.orig_images_path,config.resize,mode="val")
+    # train_dataset = dataloader.dehazing_loader(config.orig_images_path,config.resize)
+    # val_dataset = dataloader.dehazing_loader(config.orig_images_path,config.resize,mode="val")
     train_dataset = dataloader.dehazing_loader(config.orig_images_path)
-    val_dataset = dataloader.dehazing_loader(config.orig_images_path,mode="val")
+    val_dataset = dataloader.dehazing_loader(config.orig_images_path, mode="val")
 
-
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config.train_batch_size, shuffle=True, num_workers=config.num_workers, pin_memory=True)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=config.val_batch_size, shuffle=True, num_workers=config.num_workers, pin_memory=True)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config.train_batch_size, shuffle=True,
+                                               num_workers=config.num_workers, pin_memory=True)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=config.val_batch_size, shuffle=True,
+                                             num_workers=config.num_workers, pin_memory=True)
 
     if use_gpu:
         criterion = nn.MSELoss().cuda()
@@ -80,13 +80,14 @@ def train(config):
 
                 optimizer.zero_grad()
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(dehaze_net.parameters(),config.grad_clip_norm)
+                torch.nn.utils.clip_grad_norm_(dehaze_net.parameters(), config.grad_clip_norm)
                 optimizer.step()
 
-            if ((iteration+1) % config.display_iter) == 0:
-                print("Loss at iteration", iteration+1,"_",str(index), ":", loss.item())
-            if ((iteration+1) % config.snapshot_iter) == 0:
-                torch.save(dehaze_net.state_dict(), config.snapshots_folder + "Epoch" + str(epoch) + "_" + str(index) + '.pth')
+            if ((iteration + 1) % config.display_iter) == 0:
+                print("Loss at iteration", iteration + 1, "_", str(index), ":", loss.item())
+            if ((iteration + 1) % config.snapshot_iter) == 0:
+                torch.save(dehaze_net.state_dict(),
+                           config.snapshots_folder + "Epoch" + str(epoch) + "_" + str(index) + '.pth')
 
         # Validation Stage
         sub_image_list = []
@@ -98,30 +99,32 @@ def train(config):
                 if use_gpu:
                     unit_img_orig = unit_img_orig.cuda()
                     unit_img_haze = unit_img_haze.cuda()
-                    
+
                 clean_image = dehaze_net(unit_img_haze)
-                print("index" + index)
-                print("size:" + clean_image.size())
-                print("shape:" + clean_image.shape)
+                print("index" + str(index))
+                print(clean_image.size)
+                print(clean_image.shape)
                 print(clean_image)
                 sub_image_list.append(clean_image)
 
-            
-            image_all = np.concatenate(sub_image_list[:32],1)
-            for i in range(1,15):
-                index = i*32
-                image_row = np.concatenate(sub_image_list[index:index+32],0)
-                image_all = np.concatenate(image_all,image_row)
-            #torchvision.utils.save_image(torch.cat((img_haze, clean_image, img_orig),0), config.sample_output_folder+str(iter_val+1)+".jpg")
+            print("len of sub_image_list:"+str(len(sub_image_list)))
+            image_all = torch.cat(sub_image_list[:32], 1)
+            #image_all = np.concatenate(sub_image_list[:32], 1)
+            for i in range(1, 15):
+                index = i * 32
+                image_row = np.concatenate(sub_image_list[index:index + 32], 0)
+                image_all = np.concatenate(image_all, image_row)
+            # torchvision.utils.save_image(torch.cat((img_haze, clean_image, img_orig),0), config.sample_output_folder+str(iter_val+1)+".jpg")
 
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
+
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     # Input Parameters
     parser.add_argument('--orig_images_path', type=str, default="test_images/")
-    #parser.add_argument('--hazy_images_path', type=str, default="data/data/")
+    # parser.add_argument('--hazy_images_path', type=str, default="data/data/")
     parser.add_argument('--lr', type=float, default=0.0001)
     parser.add_argument('--weight_decay', type=float, default=0.0001)
     parser.add_argument('--grad_clip_norm', type=float, default=0.1)
@@ -133,7 +136,7 @@ if __name__ == "__main__":
     parser.add_argument('--snapshot_iter', type=int, default=200)
     parser.add_argument('--snapshots_folder', type=str, default="snapshots/")
     parser.add_argument('--sample_output_folder', type=str, default="samples/")
-    parser.add_argument('--use_gpu',type=int, default=0)
+    parser.add_argument('--use_gpu', type=int, default=0)
     parser.add_argument('--resize', type=bool, default=True)
 
     config = parser.parse_args()
@@ -151,7 +154,6 @@ list_image = []
 for i in range(len(img_orig)):
     unit_img_orig = img_orig[i].cpu().detach().numpy()
     list_size = [unit_img_orig.size()]
-
     #
     batch_list_img_orig = []
     # 8
@@ -170,7 +172,6 @@ for i in range(1, len(list_image), 20):
     img_full = np.concatenate([img_full, img_row], 0)
 #imwrite("result_3x3.jpg", img_full)
 '''
-
 
 
 
