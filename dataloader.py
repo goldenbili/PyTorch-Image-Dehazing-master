@@ -150,7 +150,7 @@ def RGBToYUV(data_orig,bk_w,bk_h):
 			yuv_444[1]=im_new_U_Blk_Ori
 			yuv_444[2]=im_new_V_Blk_Ori
 			list_yuv444.append(yuv_444)
-
+			'''
 			index_bk +=1
 			if index_bk == 1:
 				aaa=0
@@ -158,7 +158,7 @@ def RGBToYUV(data_orig,bk_w,bk_h):
 				aaa=0
 			elif index_bk == 50:
 				aaa=0
-
+			'''
 
 	return list_yuv444,list_yuv420
 
@@ -170,9 +170,12 @@ def RGBToYUV420(data_dehazy,width_bk,height_bk):
 
 class dehazing_loader(data.Dataset):
 
-	def __init__(self, orig_images_path, mode='train'):
+	def __init__(self, orig_images_path, mode, resize, bk_width, bk_height):
 
 		self.train_list, self.val_list = populate_train_list(orig_images_path)
+		self.resize = resize
+		self.bkW = bk_width
+		self.bkH = bk_height
 
 
 		if mode == 'train':
@@ -184,10 +187,14 @@ class dehazing_loader(data.Dataset):
 		
 
 	def __getitem__(self, index):
-
 		data_orig_path = self.data_list[index]
 		# load image
 		data_orig = Image.open(data_orig_path)
+		if self.resize:
+			data_orig = data_orig.resize((480, 640), Image.ANTIALIAS)
+
+		width = data_orig.width
+		height = data_orig.height
 
 		'''
 		data_orig = (np.asarray(data_orig)/255.0)
@@ -200,7 +207,7 @@ class dehazing_loader(data.Dataset):
 		'''
 
 		# data_orig to yuv444, yuv420
-		data_yuv444 ,data_yuv420 = RGBToYUV(data_orig,32,32)
+		data_yuv444 ,data_yuv420 = RGBToYUV(data_orig, self.bkW, self.bkH)
 		list_tensor_yuv444 = []
 		list_tensor_yuv420 = []
 		for yuv444 in data_yuv444:
@@ -215,7 +222,7 @@ class dehazing_loader(data.Dataset):
 
 			#list_tensor_yuv420.append(torch.from_numpy(yuv420).float())
 
-		return list_tensor_yuv444 ,list_tensor_yuv420
+		return list_tensor_yuv444 ,list_tensor_yuv420, width, height
 
 
 

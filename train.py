@@ -38,6 +38,9 @@ def weights_init(m):
 
 def train(config):
     use_gpu = config.use_gpu
+    bk_width = config.block_width
+    bk_height = config.block_height
+    resize = config.resize
 
     if use_gpu:
         dehaze_net = net.dehaze_net().cuda()
@@ -48,8 +51,8 @@ def train(config):
 
     # train_dataset = dataloader.dehazing_loader(config.orig_images_path,config.resize)
     # val_dataset = dataloader.dehazing_loader(config.orig_images_path,config.resize,mode="val")
-    train_dataset = dataloader.dehazing_loader(config.orig_images_path)
-    val_dataset = dataloader.dehazing_loader(config.orig_images_path, mode="val")
+    train_dataset = dataloader.dehazing_loader(config.orig_images_path,'train', resize, bk_width, bk_height)
+    val_dataset = dataloader.dehazing_loader(config.orig_images_path, "val", resize, bk_width, bk_height)
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config.train_batch_size, shuffle=True,
                                                num_workers=config.num_workers, pin_memory=True)
@@ -65,7 +68,7 @@ def train(config):
     dehaze_net.train()
 
     for epoch in range(config.num_epochs):
-        for iteration, (img_orig, img_haze) in enumerate(train_loader):
+        for iteration, (img_orig, img_haze, width, height) in enumerate(train_loader):
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
@@ -90,8 +93,10 @@ def train(config):
                            config.snapshots_folder + "Epoch" + str(epoch) + "_" + str(index) + '.pth')
 
         # Validation Stage
-        sub_image_list = []
+
         for iter_val, (img_orig, img_haze) in enumerate(val_loader):
+            sub_image_list = []
+            ori_sub_image_list = []
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
@@ -101,20 +106,31 @@ def train(config):
                     unit_img_haze = unit_img_haze.cuda()
 
                 clean_image = dehaze_net(unit_img_haze)
+                '''
                 print("index" + str(index))
                 print(clean_image.size)
                 print(clean_image.shape)
                 print(clean_image)
+                '''
                 sub_image_list.append(clean_image)
+                ori_sub_image_list.append(img_orig)
 
-            print("len of sub_image_list:"+str(len(sub_image_list)))
-            image_all = torch.cat(sub_image_list[:32], 1)
-            #image_all = np.concatenate(sub_image_list[:32], 1)
-            for i in range(1, 15):
-                index = i * 32
-                image_row = np.concatenate(sub_image_list[index:index + 32], 0)
-                image_all = np.concatenate(image_all, image_row)
-            # torchvision.utils.save_image(torch.cat((img_haze, clean_image, img_orig),0), config.sample_output_folder+str(iter_val+1)+".jpg")
+            num_width = width/bk_width
+            num_height = height/bk_height
+            full_bk_num = num_width*num_height
+
+            image_all = torch.cat(sub_image_list[:num_width], 1)
+            for i in range(num_width, full_bk_num, num_width):
+                image_row = torch.cat(sub_image_list[index:index + bk_width], 1)
+                image_all = torch.cat([image_all, image_row],0)
+            torchvision.utils.save_image(image_all, config.sample_output_folder + str(iter_val +1 ) + "_cal.jpg")
+
+
+            image_all_ori = torch.cat(ori_sub_image_list[:num_width], 1)
+            for i in range(num_width, full_bk_num, num_width):
+                image_row = torch.cat(ori_sub_image_list[index:index + bk_width], 1)
+                image_all_ori = torch.cat([image_all_ori, image_row],0)
+            torchvision.utils.save_image(image_all_ori, config.sample_output_folder + str(iter_val +1 ) + "_ori.jpg")
 
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
 
@@ -138,6 +154,8 @@ if __name__ == "__main__":
     parser.add_argument('--sample_output_folder', type=str, default="samples/")
     parser.add_argument('--use_gpu', type=int, default=0)
     parser.add_argument('--resize', type=bool, default=True)
+    parser.add_argument('--block_width', type=int, default=32)
+    parser.add_argument('--block_height', type=int, default=32)
 
     config = parser.parse_args()
 
