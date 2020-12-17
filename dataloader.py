@@ -174,6 +174,7 @@ class dehazing_loader(data.Dataset):
 
 		self.train_list, self.val_list = populate_train_list(orig_images_path)
 
+
 		if mode == 'train':
 			self.data_list = self.train_list
 			print("Total training examples:", len(self.train_list))
@@ -187,8 +188,6 @@ class dehazing_loader(data.Dataset):
 		data_orig_path = self.data_list[index]
 		# load image
 		data_orig = Image.open(data_orig_path)
-		data_orig = data_orig.resize((480, 640), Image.ANTIALIAS)
-
 
 		'''
 		data_orig = (np.asarray(data_orig)/255.0)
@@ -216,11 +215,14 @@ class dehazing_loader(data.Dataset):
 
 			#list_tensor_yuv420.append(torch.from_numpy(yuv420).float())
 
-		#
-
-
 		return list_tensor_yuv444 ,list_tensor_yuv420
 
+
+
+
+
+	def __len__(self):
+		return len(self.data_list)
 
 		#ori-process
 		'''
@@ -252,8 +254,3 @@ class dehazing_loader(data.Dataset):
 		#data_orig = (np.asarray(data_orig)/255.0)
 		#data_hazy = (np.asarray(data_hazy)/255.0)
 		#		return data_orig.permute(2,0,1), data_hazy.permute(2,0,1)
-
-
-	def __len__(self):
-		return len(self.data_list)
-

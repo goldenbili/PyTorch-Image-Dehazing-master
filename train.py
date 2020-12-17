@@ -47,8 +47,11 @@ def train(config):
 
     dehaze_net.apply(weights_init)
 
+    #train_dataset = dataloader.dehazing_loader(config.orig_images_path,config.resize)
+    #val_dataset = dataloader.dehazing_loader(config.orig_images_path,config.resize,mode="val")
     train_dataset = dataloader.dehazing_loader(config.orig_images_path)
     val_dataset = dataloader.dehazing_loader(config.orig_images_path,mode="val")
+
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config.train_batch_size, shuffle=True, num_workers=config.num_workers, pin_memory=True)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=config.val_batch_size, shuffle=True, num_workers=config.num_workers, pin_memory=True)
@@ -57,39 +60,12 @@ def train(config):
         criterion = nn.MSELoss().cuda()
     else:
         criterion = nn.MSELoss()
+
     optimizer = torch.optim.Adam(dehaze_net.parameters(), lr=config.lr, weight_decay=config.weight_decay)
     dehaze_net.train()
 
     for epoch in range(config.num_epochs):
         for iteration, (img_orig, img_haze) in enumerate(train_loader):
-            '''
-            list_image = []
-            # 300
-            for i in range(len(img_orig)):
-                unit_img_orig = img_orig[i].cpu().detach().numpy()
-                list_size = [unit_img_orig.size()]
-
-                #
-                batch_list_img_orig = []
-                # 8
-                for j in range(list_size[0]):
-                    unit_img_orig_one = unit_img_orig[j]
-                    batch_list_img_orig.append(unit_img_orig_one)
-                    # list_image.append(img_orig[i].cpu().detach().numpy())
-                    #for train_index in range(config.train_batch_size):
-            '''
-
-
-
-            '''
-            img_full = np.concatenate(list_image[0:20], 1)
-            #imwrite("result_3x3.jpg", img_full)
-            for i in range(1, len(list_image), 20):
-                img_row = np.concatenate(list_image[i:i + 20], 1)
-                img_full = np.concatenate([img_full, img_row], 0)
-            #imwrite("result_3x3.jpg", img_full)
-            '''
-
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
@@ -135,19 +111,9 @@ def train(config):
 
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
 
-
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-
     # Input Parameters
     parser.add_argument('--orig_images_path', type=str, default="test_images/")
     #parser.add_argument('--hazy_images_path', type=str, default="data/data/")
@@ -163,6 +129,7 @@ if __name__ == "__main__":
     parser.add_argument('--snapshots_folder', type=str, default="snapshots/")
     parser.add_argument('--sample_output_folder', type=str, default="samples/")
     parser.add_argument('--use_gpu',type=int, default=0)
+    parser.add_argument('--resize', type=bool, default=True)
 
     config = parser.parse_args()
 
@@ -173,9 +140,31 @@ if __name__ == "__main__":
 
     train(config)
 
+'''
+list_image = []
+# 300
+for i in range(len(img_orig)):
+    unit_img_orig = img_orig[i].cpu().detach().numpy()
+    list_size = [unit_img_orig.size()]
 
+    #
+    batch_list_img_orig = []
+    # 8
+    for j in range(list_size[0]):
+        unit_img_orig_one = unit_img_orig[j]
+        batch_list_img_orig.append(unit_img_orig_one)
+        # list_image.append(img_orig[i].cpu().detach().numpy())
+        #for train_index in range(config.train_batch_size):
+'''
 
-
+'''
+img_full = np.concatenate(list_image[0:20], 1)
+#imwrite("result_3x3.jpg", img_full)
+for i in range(1, len(list_image), 20):
+    img_row = np.concatenate(list_image[i:i + 20], 1)
+    img_full = np.concatenate([img_full, img_row], 0)
+#imwrite("result_3x3.jpg", img_full)
+'''
 
 
 
