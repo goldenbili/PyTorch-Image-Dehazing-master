@@ -68,6 +68,9 @@ def train(config):
     dehaze_net.train()
 
     for epoch in range(config.num_epochs):
+        # 有 iteration 張一起訓練.
+        # img_orig , img_haze 是包含 iteration 個圖片的 tensor 資料集 , 訓練時會一口氣訓練 iteration 個圖片.
+        # 有點像將圖片橫向拼起來 實際上是不同維度.
         for iteration, (img_orig, img_haze, width, height) in enumerate(train_loader):
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
@@ -94,7 +97,7 @@ def train(config):
 
         # Validation Stage
 
-        for iter_val, (img_orig, img_haze) in enumerate(val_loader):
+        for iter_val, (img_orig, img_haze, width, height) in enumerate(val_loader):
             sub_image_list = []
             ori_sub_image_list = []
             for index in range(len(img_orig)):
@@ -115,6 +118,8 @@ def train(config):
                 sub_image_list.append(clean_image)
                 ori_sub_image_list.append(img_orig)
 
+            width = width[iter_val]
+            height = height[iter_val]
             num_width = width/bk_width
             num_height = height/bk_height
             full_bk_num = num_width*num_height
@@ -145,8 +150,8 @@ if __name__ == "__main__":
     parser.add_argument('--weight_decay', type=float, default=0.0001)
     parser.add_argument('--grad_clip_norm', type=float, default=0.1)
     parser.add_argument('--num_epochs', type=int, default=10)
-    parser.add_argument('--train_batch_size', type=int, default=8)
-    parser.add_argument('--val_batch_size', type=int, default=8)
+    parser.add_argument('--train_batch_size', type=int, default=1)
+    parser.add_argument('--val_batch_size', type=int, default=1)
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--display_iter', type=int, default=10)
     parser.add_argument('--snapshot_iter', type=int, default=200)
