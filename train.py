@@ -47,10 +47,11 @@ def train(config):
     else:
         dehaze_net = net.dehaze_net()
 
-    dehaze_net.apply(weights_init)
+    if config.snap_train_data:
+        dehaze_net.load_state_dict(torch.load(config.snapshots_folder + config.snap_train_data))
+    else:
+        dehaze_net.apply(weights_init)
 
-    # train_dataset = dataloader.dehazing_loader(config.orig_images_path,config.resize)
-    # val_dataset = dataloader.dehazing_loader(config.orig_images_path,config.resize,mode="val")
     train_dataset = dataloader.dehazing_loader(config.orig_images_path,'train', resize, bk_width, bk_height)
     val_dataset = dataloader.dehazing_loader(config.orig_images_path, "val", resize, bk_width, bk_height)
 
@@ -64,14 +65,17 @@ def train(config):
     else:
         criterion = nn.MSELoss()
 
+
     optimizer = torch.optim.Adam(dehaze_net.parameters(), lr=config.lr, weight_decay=config.weight_decay)
     dehaze_net.train()
 
+    # 同一組訓練資料跑 epoch 次
+    save_counter = 0
     for epoch in range(config.num_epochs):
         # 有 iteration 張一起訓練.
         # img_orig , img_haze 是包含 iteration 個圖片的 tensor 資料集 , 訓練時會一口氣訓練 iteration 個圖片.
         # 有點像將圖片橫向拼起來 實際上是不同維度.
-        for iteration, (img_orig, img_haze, width, height) in enumerate(train_loader):
+        for iteration, (img_orig, img_haze,width, height) in enumerate(train_loader):
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
@@ -89,11 +93,24 @@ def train(config):
                 torch.nn.utils.clip_grad_norm_(dehaze_net.parameters(), config.grad_clip_norm)
                 optimizer.step()
 
+                # show loss every config.display_block_iter
+                if (( index+1 )%config.display_block_iter) == 0:
+                    print("Loss at index_", index + 1, "/" + str(len(img_orig)) + " ; iteration_" , iteration + 1 ,   ":" , loss.item())
+                # save snapshot every save_counter times
+                if ((save_counter + 1) % config.snapshot_iter) == 0:
+                    torch.save(dehaze_net.state_dict(),
+                               config.snapshots_folder + "Epoch:" + str(epoch) + "_TrainTimes:" + str(save_counter) + '.pth')
+
+                save_counter = save_counter + 1
+
             if ((iteration + 1) % config.display_iter) == 0:
-                print("Loss at iteration", iteration + 1, "_", str(index), ":", loss.item())
+                print("Loss at iteration", iteration + 1,  ":", loss.item())
+            '''
             if ((iteration + 1) % config.snapshot_iter) == 0:
                 torch.save(dehaze_net.state_dict(),
                            config.snapshots_folder + "Epoch" + str(epoch) + "_" + str(index) + '.pth')
+            '''
+
 
         # Validation Stage
 
@@ -105,7 +122,7 @@ def train(config):
                 unit_img_haze = img_haze[index]
                 # train stage
                 if use_gpu:
-                    unit_img_orig = unit_img_orig.cuda()
+                    # unit_img_orig = unit_img_orig.cuda()
                     unit_img_haze = unit_img_haze.cuda()
 
                 clean_image = dehaze_net(unit_img_haze)
@@ -145,7 +162,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Input Parameters
     parser.add_argument('--orig_images_path', type=str, default="test_images/")
-    # parser.add_argument('--hazy_images_path', type=str, default="data/data/")
+    # parser.add_argument('--hzy_images_path', type=str, default="data/data/")
     parser.add_argument('--lr', type=float, default=0.0001)
     parser.add_argument('--weight_decay', type=float, default=0.0001)
     parser.add_argument('--grad_clip_norm', type=float, default=0.1)
@@ -154,9 +171,11 @@ if __name__ == "__main__":
     parser.add_argument('--val_batch_size', type=int, default=1)
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--display_iter', type=int, default=10)
-    parser.add_argument('--snapshot_iter', type=int, default=200)
+    parser.add_argument('--display_block_iter', type=int, default=20)
+    parser.add_argument('--snapshot_iter', type=int, default=300)
     parser.add_argument('--snapshots_folder', type=str, default="snapshots/")
     parser.add_argument('--sample_output_folder', type=str, default="samples/")
+    parser.add_argument('--snap_train_data', type=str, default="")
     parser.add_argument('--use_gpu', type=int, default=0)
     parser.add_argument('--resize', type=bool, default=True)
     parser.add_argument('--block_width', type=int, default=32)
