@@ -122,7 +122,7 @@ def train(config):
                 unit_img_haze = img_haze[index]
                 # train stage
                 if use_gpu:
-                    # unit_img_orig = unit_img_orig.cuda()
+                    unit_img_orig = unit_img_orig.cuda()
                     unit_img_haze = unit_img_haze.cuda()
 
                 clean_image = dehaze_net(unit_img_haze)
@@ -133,7 +133,7 @@ def train(config):
                 print(clean_image)
                 '''
                 sub_image_list.append(clean_image)
-                ori_sub_image_list.append(img_orig)
+                ori_sub_image_list.append(unit_img_orig)
 
             width = width[iter_val]
             height = height[iter_val]
@@ -141,18 +141,34 @@ def train(config):
             num_height = height/bk_height
             full_bk_num = num_width*num_height
 
-            image_all = torch.cat(sub_image_list[:num_width], 1)
+            #------------------------------------------------------------------#
+            #image_all = torch.cat((sub_image_list[:num_width]), 1)
+            image_all = torch.cat((sub_image_list[0],sub_image_list[1]), 1)
+            for j in range (2,num_width):
+                image_all = torch.cat((image_all,sub_image_list[j]), 1)
+
             for i in range(num_width, full_bk_num, num_width):
-                image_row = torch.cat(sub_image_list[index:index + bk_width], 1)
+                #image_row = torch.cat(sub_image_list[index:index + bk_width], 1)
+                image_row = torch.cat((sub_image_list[i],sub_image_list[i +1]), 1)
+                for j in range(i+2, num_width):
+                    image_row = torch.cat((image_row, sub_image_list[j]), 1)
                 image_all = torch.cat([image_all, image_row],0)
             torchvision.utils.save_image(image_all, config.sample_output_folder + str(iter_val +1 ) + "_cal.jpg")
+            # ------------------------------------------------------------------#
 
-
-            image_all_ori = torch.cat(ori_sub_image_list[:num_width], 1)
+            # ------------------------------------------------------------------#
+            # image_all_ori = torch.cat(ori_sub_image_list[:num_width], 1)
+            image_all_ori = torch.cat((ori_sub_image_list[0], ori_sub_image_list[1]), 1)
+            for j in range(2, num_width):
+                image_all_ori = torch.cat((image_all_ori, ori_sub_image_list[j]), 1)
             for i in range(num_width, full_bk_num, num_width):
-                image_row = torch.cat(ori_sub_image_list[index:index + bk_width], 1)
+                #image_row = torch.cat(ori_sub_image_list[index:index + bk_width], 1)
+                image_row = torch.cat((ori_sub_image_list[i],ori_sub_image_list[i +1]), 1)
+                for j in range(i+2, num_width):
+                    image_row = torch.cat((image_row, ori_sub_image_list[j]), 1)
                 image_all_ori = torch.cat([image_all_ori, image_row],0)
             torchvision.utils.save_image(image_all_ori, config.sample_output_folder + str(iter_val +1 ) + "_ori.jpg")
+            # ------------------------------------------------------------------#
 
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
 
