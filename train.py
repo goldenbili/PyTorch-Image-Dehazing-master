@@ -75,7 +75,7 @@ def train(config):
         # 有 iteration 張一起訓練.
         # img_orig , img_haze 是包含 iteration 個圖片的 tensor 資料集 , 訓練時會一口氣訓練 iteration 個圖片.
         # 有點像將圖片橫向拼起來 實際上是不同維度.
-        for iteration, (img_orig, img_haze,width, height) in enumerate(train_loader):
+        for iteration, (img_orig, img_haze, bl_num_width, bl_num_height) in enumerate(train_loader):
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
@@ -99,7 +99,7 @@ def train(config):
                 # save snapshot every save_counter times
                 if ((save_counter + 1) % config.snapshot_iter) == 0:
                     torch.save(dehaze_net.state_dict(),
-                               config.snapshots_folder + "Epoch:" + str(epoch) + "_TrainTimes:" + str(save_counter) + '.pth')
+                               config.snapshots_folder + "Epoch:" + str(epoch) + "_TrainTimes:" + str(save_counter +1 ) + '.pth')
 
                 save_counter = save_counter + 1
 
@@ -114,7 +114,7 @@ def train(config):
 
         # Validation Stage
 
-        for iter_val, (img_orig, img_haze, width, height) in enumerate(val_loader):
+        for iter_val, (img_orig, img_haze, bl_num_width, bl_num_height) in enumerate(val_loader):
             sub_image_list = []
             ori_sub_image_list = []
             for index in range(len(img_orig)):
@@ -135,10 +135,8 @@ def train(config):
                 sub_image_list.append(clean_image)
                 ori_sub_image_list.append(unit_img_orig)
 
-            width = width[iter_val]
-            height = height[iter_val]
-            num_width = int(width/bk_width)
-            num_height = int(height/bk_height)
+            num_width = bl_num_width[iter_val]
+            num_height = bl_num_height[iter_val]
             full_bk_num = num_width*num_height
 
             #------------------------------------------------------------------#
@@ -156,7 +154,13 @@ def train(config):
                     image_row = torch.cat((image_row, sub_image_list[j]), 1)
                 '''
                 image_all = torch.cat([image_all, image_row], 0)
-            torchvision.utils.save_image(image_all, config.sample_output_folder + str(iter_val +1 ) + "_cal.jpg")
+            image_name = config.sample_output_folder
+            print(image_name)
+            image_name = image_name + str(iter_val + 1)
+            print(image_name)
+            image_name = image_name + "_cal.jpg"
+            print(image_name)
+            torchvision.utils.save_image(image_all, image_name)
             # ------------------------------------------------------------------#
 
             # ------------------------------------------------------------------#
@@ -173,8 +177,10 @@ def train(config):
                 for j in range(i+2, num_width):
                     image_row = torch.cat((image_row, ori_sub_image_list[j]), 1)
                 '''
-                image_all_ori = torch.cat([image_all_ori, image_row],0)
-            torchvision.utils.save_image(image_all_ori, config.sample_output_folder + str(iter_val +1 ) + "_ori.jpg")
+                image_all_ori = torch.cat([image_all_ori, image_row], 0)
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_ori.jpg"
+            print(image_name)
+            torchvision.utils.save_image(image_all_ori, image_name)
             # ------------------------------------------------------------------#
 
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
@@ -200,7 +206,7 @@ if __name__ == "__main__":
     parser.add_argument('--sample_output_folder', type=str, default="samples/")
     parser.add_argument('--snap_train_data', type=str, default="")
     parser.add_argument('--use_gpu', type=int, default=0)
-    parser.add_argument('--resize', type=bool, default=True)
+    parser.add_argument('--resize', type=bool, default=False)
     parser.add_argument('--block_width', type=int, default=32)
     parser.add_argument('--block_height', type=int, default=32)
 
