@@ -136,7 +136,9 @@ def train(config):
                 ori_sub_image_list.append(unit_img_orig)
 
             num_width = bl_num_width[iter_val]
+            print("num_width:" + str(num_width))
             num_height = bl_num_height[iter_val]
+            print("num_height:" + str(num_height))
             full_bk_num = num_width*num_height
 
             #------------------------------------------------------------------#
