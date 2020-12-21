@@ -95,11 +95,24 @@ def train(config):
 
                 # show loss every config.display_block_iter
                 if (( index+1 )%config.display_block_iter) == 0:
-                    print("Loss at index_", index + 1, "/" + str(len(img_orig)) + " ; iteration_" , iteration + 1 ,   ":" , loss.item())
+                    print("Loss at index_", index + 1, "/" + str(len(img_orig)) + ":iteration_", iteration + 1, ":", loss.item())
                 # save snapshot every save_counter times
                 if ((save_counter + 1) % config.snapshot_iter) == 0:
-                    torch.save(dehaze_net.state_dict(),
-                               config.snapshots_folder + "Epoch:" + str(epoch) + "_TrainTimes:" + str(save_counter +1 ) + '.pth')
+                    saveName = config.snapshots_folder
+                    print(saveName)
+                    saveName = saveName + "Epoch:"
+                    print(saveName)
+                    saveName = saveName + str(epoch)
+                    print(saveName)
+                    saveName = saveName + "_TrainTimes:"
+                    print(saveName)
+                    saveName = saveName + str(save_counter+1)
+                    print(saveName)
+                    saveName = saveName + ".pth"
+                    print(saveName)
+                    torch.save(dehaze_net.state_dict(),saveName)
+                    #torch.save(dehaze_net.state_dict(),
+                    #           config.snapshots_folder , "Epoch:", str(epoch), "_TrainTimes:", str(save_counter+1), ".pth")
 
                 save_counter = save_counter + 1
 
@@ -135,9 +148,9 @@ def train(config):
                 sub_image_list.append(clean_image)
                 ori_sub_image_list.append(unit_img_orig)
 
-            num_width = bl_num_width[iter_val]
+            num_width = int(bl_num_width[iter_val].item())
             print("num_width:" + str(num_width))
-            num_height = bl_num_height[iter_val]
+            num_height = int(bl_num_height[iter_val].item())
             print("num_height:" + str(num_height))
             full_bk_num = num_width*num_height
 

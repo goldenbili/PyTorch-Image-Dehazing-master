@@ -190,11 +190,14 @@ class dehazing_loader(data.Dataset):
 		data_orig_path = self.data_list[index]
 		# load image
 		data_orig = Image.open(data_orig_path)
+		bl_num_width = data_orig.width
+		bl_num_height = data_orig.height
 		if self.resize:
 			data_orig = data_orig.resize((480, 640), Image.ANTIALIAS)
+			bl_num_width = 640/self.bkW
+			bl_num_height = 480/self.bkH
 
-		width = data_orig.width
-		height = data_orig.height
+
 
 		'''
 		data_orig = (np.asarray(data_orig)/255.0)
@@ -222,7 +225,7 @@ class dehazing_loader(data.Dataset):
 
 			#list_tensor_yuv420.append(torch.from_numpy(yuv420).float())
 
-		return list_tensor_yuv444 ,list_tensor_yuv420, width, height
+		return list_tensor_yuv444 ,list_tensor_yuv420, bl_num_width, bl_num_height
 
 
 
