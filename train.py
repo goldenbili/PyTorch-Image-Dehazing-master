@@ -179,8 +179,10 @@ def train(config):
             image_name = image_name + "_cal.jpg"
             print(image_name)
             image_name2 = str(iter_val + 1) + "_cal.jpg"
+            print("image_all_shape:" + image_all.shape)
+            print("image_all:" + image_all)
             #torchvision.utils.save_image(image_all, image_name)
-            torchvision.utils.save_image(image_all,"/content/drive/MyDrive/AOD-Net/sampleoutputPaht/"+image_name2)
+            torchvision.utils.save_image(image_all, "/content/drive/MyDrive/AOD-Net/sampleoutputPaht/a_cal.jpg")
 
             # ------------------------------------------------------------------#
 
