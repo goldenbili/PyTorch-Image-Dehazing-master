@@ -96,8 +96,10 @@ def train(config):
                 print("clean_image:")
                 print(clean_image.shape)
                 print(clean_image)
-                if torch.isnan(unit_img_haze) or torch.isinf(clean_image):
+                if torch.isnan(unit_img_haze) :
                     print("loss is nan")
+                if torch.isinf(clean_image):
+                    print("loss is inf")
 
 
 
