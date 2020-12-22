@@ -142,12 +142,10 @@ def train(config):
                     unit_img_haze = unit_img_haze.cuda()
 
                 clean_image = dehaze_net(unit_img_haze)
-                '''
+
                 print("index" + str(index))
-                print(clean_image.size)
                 print(clean_image.shape)
-                print(clean_image)
-                '''
+
                 sub_image_list.append(clean_image)
                 ori_sub_image_list.append(unit_img_orig)
 
@@ -159,6 +157,10 @@ def train(config):
 
             #------------------------------------------------------------------#
             image_all = torch.cat((sub_image_list[:num_width]), 1)
+            print("index" + str(iter_val))
+            print("image_all.shape")
+            print(image_all.shape)
+
             '''
             image_all = torch.cat((sub_image_list[0],sub_image_list[1]), 1)
             for j in range(2, num_width):
@@ -173,14 +175,20 @@ def train(config):
                 '''
                 image_all = torch.cat([image_all, image_row], 0)
             image_name = config.sample_output_folder
+            '''
             print(image_name)
             image_name = image_name + str(iter_val + 1)
             print(image_name)
             image_name = image_name + "_cal.jpg"
             print(image_name)
             image_name2 = str(iter_val + 1) + "_cal.jpg"
-            print("image_all_shape:" + image_all.shape)
-            print("image_all:" + image_all)
+            print("image_all_shape:")
+            print(image_all.shape)
+            print("image_all:")
+            print(image_all)
+            '''
+            print("image_all_shape:")
+            print(image_all.shape)
             #torchvision.utils.save_image(image_all, image_name)
             torchvision.utils.save_image(image_all, "/content/drive/MyDrive/AOD-Net/sampleoutputPaht/a_cal.jpg")
 
