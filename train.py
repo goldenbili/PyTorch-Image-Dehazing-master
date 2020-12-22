@@ -89,9 +89,6 @@ def train(config):
 
                 loss = criterion(clean_image, unit_img_orig)
 
-                if torch.isnan(unit_img_haze) or torch.isinf(clean_image):
-                    print("loss is nan")
-
                 print("unit_img_haze:")
                 print(unit_img_haze.shape)
                 print(unit_img_haze)
@@ -99,6 +96,10 @@ def train(config):
                 print("clean_image:")
                 print(clean_image.shape)
                 print(clean_image)
+                if torch.isnan(unit_img_haze) or torch.isinf(clean_image):
+                    print("loss is nan")
+
+
 
                 optimizer.zero_grad()
                 loss.backward()
