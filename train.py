@@ -165,6 +165,7 @@ def train(config):
                 sub_image_list.append(clean_image)
                 ori_sub_image_list.append(unit_img_orig)
 
+            print("iter_val:"+str(iter_val))
             print("num_width-tensor:")
             print(bl_num_width)
             num_width = int(bl_num_width[iter_val].item())
