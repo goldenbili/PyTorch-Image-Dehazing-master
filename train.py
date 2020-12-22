@@ -172,7 +172,7 @@ def train(config):
             full_bk_num = num_width * num_height
 
             # ------------------------------------------------------------------#
-            image_all = torch.cat((sub_image_list[:num_width]), 1)
+            image_all = torch.cat((sub_image_list[:num_width]), 3)
             print("Merge image1.index" + str(iter_val))
             print("image_all.shape")
             print(image_all.shape)
@@ -183,13 +183,13 @@ def train(config):
                 image_all = torch.cat((image_all,sub_image_list[j]), 1)
             '''
             for i in range(num_width, full_bk_num, num_width):
-                image_row = torch.cat(sub_image_list[i:i + num_width], 1)
+                image_row = torch.cat(sub_image_list[i:i + num_width], 3)
                 '''
                 image_row = torch.cat((sub_image_list[i],sub_image_list[i +1]), 1)
                 for j in range(i+2, num_width):
                     image_row = torch.cat((image_row, sub_image_list[j]), 1)
                 '''
-                image_all = torch.cat([image_all, image_row], 0)
+                image_all = torch.cat([image_all, image_row], 2)
             '''
             image_name = config.sample_output_folder
             print(image_name)
@@ -211,20 +211,20 @@ def train(config):
             # ------------------------------------------------------------------#
 
             # ------------------------------------------------------------------#
-            image_all_ori = torch.cat(ori_sub_image_list[:num_width], 1)
+            image_all_ori = torch.cat(ori_sub_image_list[:num_width], 3)
             '''
             image_all_ori = torch.cat((ori_sub_image_list[0], ori_sub_image_list[1]), 1)
             for j in range(2, num_width):
                 image_all_ori = torch.cat((image_all_ori, ori_sub_image_list[j]), 1)
             '''
             for i in range(num_width, full_bk_num, num_width):
-                image_row = torch.cat(ori_sub_image_list[i:i + num_width], 1)
+                image_row = torch.cat(ori_sub_image_list[i:i + num_width], 3)
                 '''
                 image_row = torch.cat((ori_sub_image_list[i],ori_sub_image_list[i +1]), 1)
                 for j in range(i+2, num_width):
                     image_row = torch.cat((image_row, ori_sub_image_list[j]), 1)
                 '''
-                image_all_ori = torch.cat([image_all_ori, image_row], 0)
+                image_all_ori = torch.cat([image_all_ori, image_row], 2)
             image_name = config.sample_output_folder + str(iter_val + 1) + "_ori.jpg"
             print(image_name)
             # torchvision.utils.save_image(image_all_ori, image_name)
