@@ -89,7 +89,7 @@ def train(config):
 
                 loss = criterion(clean_image, unit_img_orig)
 
-                if torch.isnan(unit_img_haze) or torch.torch.isinf(clean_image):
+                if torch.isnan(unit_img_haze) or torch.isinf(clean_image):
                     print("loss is nan")
 
                 print("unit_img_haze:")
