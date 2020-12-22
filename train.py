@@ -96,10 +96,10 @@ def train(config):
                 print("clean_image:")
                 print(clean_image.shape)
                 print(clean_image)
-                if torch.isnan(unit_img_haze) :
-                    print("loss is nan")
-                if torch.isinf(clean_image):
-                    print("loss is inf")
+                if torch.isnan(unit_img_haze).any():
+                    print("loss is nan1")
+                if torch.isinf(clean_image).any():
+                    print("loss is inf1")
 
 
 
@@ -107,6 +107,9 @@ def train(config):
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(dehaze_net.parameters(), config.grad_clip_norm)
                 optimizer.step()
+
+                if loss.item() == 'nan':
+                    print("loss is nan2")
 
                 # show loss every config.display_block_iter
                 if ((index + 1) % config.display_block_iter) == 0:
