@@ -54,7 +54,7 @@ def train(config):
     else:
         dehaze_net.apply(weights_init)
 
-    train_dataset = dataloader.dehazing_loader(config.orig_images_path,'train', resize, bk_width, bk_height)
+    train_dataset = dataloader.dehazing_loader(config.orig_images_path, 'train', resize, bk_width, bk_height)
     val_dataset = dataloader.dehazing_loader(config.orig_images_path, "val", resize, bk_width, bk_height)
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config.train_batch_size, shuffle=True,
@@ -66,7 +66,6 @@ def train(config):
         criterion = nn.MSELoss().cuda()
     else:
         criterion = nn.MSELoss()
-
 
     optimizer = torch.optim.Adam(dehaze_net.parameters(), lr=config.lr, weight_decay=config.weight_decay)
     dehaze_net.train()
@@ -90,16 +89,29 @@ def train(config):
 
                 loss = criterion(clean_image, unit_img_orig)
 
+                if torch.isnan(unit_img_haze) or torch.torch.isinf(clean_image):
+                    print("loss is nan")
+
+                print("unit_img_haze:")
+                print(unit_img_haze.shape)
+                print(unit_img_haze)
+
+                print("clean_image:")
+                print(clean_image.shape)
+                print(clean_image)
+
                 optimizer.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(dehaze_net.parameters(), config.grad_clip_norm)
                 optimizer.step()
 
                 # show loss every config.display_block_iter
-                if (( index+1 )%config.display_block_iter) == 0:
-                    print("Loss at index_",index+1,"/",str(len(img_orig)),":iteration_",iteration+1, ":", loss.item())
+                if ((index + 1) % config.display_block_iter) == 0:
+                    print("Loss at index_", index + 1, "/", str(len(img_orig)), ":iteration_", iteration + 1, ":",
+                          loss.item())
                 # save snapshot every save_counter times
                 if ((save_counter + 1) % config.snapshot_iter) == 0:
+                    '''
                     saveName = config.snapshots_folder
                     print(saveName)
                     saveName = saveName + "_Epoch:"
@@ -112,21 +124,22 @@ def train(config):
                     print(saveName)
                     saveName = saveName + ".pth"
                     print(saveName)
-                    saveName = "Epoch:" + str(epoch) + "_TrainTimes:" + str(save_counter+1) + ".pth"
+                    '''
+                    saveName = "Epoch:" + str(epoch) + "_TrainTimes:" + str(save_counter + 1) + ".pth"
                     torch.save(dehaze_net.state_dict(), config.snapshots_folder + saveName)
-                    #torch.save(dehaze_net.state_dict(),
-                    #           config.snapshots_folder , "Epoch:", str(epoch), "_TrainTimes:", str(save_counter+1), ".pth")
+                    # torch.save(dehaze_net.state_dict(),
+                    #           config.snapshots_folder , "Epoch:", str(epoch), "
+                    #           _TrainTimes:", str(save_counter+1), ".pth")
 
-                save_counter = save_counter + 1
+                    save_counter = save_counter + 1
 
-            if ((iteration + 1) % config.display_iter) == 0:
-                print("Loss at iteration", iteration + 1,  ":", loss.item())
-            '''
-            if ((iteration + 1) % config.snapshot_iter) == 0:
-                torch.save(dehaze_net.state_dict(),
-                           config.snapshots_folder + "Epoch" + str(epoch) + "_" + str(index) + '.pth')
-            '''
-
+                    if ((iteration + 1) % config.display_iter) == 0:
+                        print("Loss at iteration", iteration + 1, ":", loss.item())
+                    '''
+                    if ((iteration + 1) % config.snapshot_iter) == 0:
+                        torch.save(dehaze_net.state_dict(),
+                                   config.snapshots_folder + "Epoch" + str(epoch) + "_" + str(index) + '.pth')
+                    '''
 
         # Validation Stage
 
@@ -143,7 +156,7 @@ def train(config):
 
                 clean_image = dehaze_net(unit_img_haze)
 
-                print("index" + str(index))
+                print("sub image. index" + str(index))
                 print(clean_image.shape)
 
                 sub_image_list.append(clean_image)
@@ -153,11 +166,11 @@ def train(config):
             print("num_width:" + str(num_width))
             num_height = int(bl_num_height[iter_val].item())
             print("num_height:" + str(num_height))
-            full_bk_num = num_width*num_height
+            full_bk_num = num_width * num_height
 
-            #------------------------------------------------------------------#
+            # ------------------------------------------------------------------#
             image_all = torch.cat((sub_image_list[:num_width]), 1)
-            print("index" + str(iter_val))
+            print("Merge image1.index" + str(iter_val))
             print("image_all.shape")
             print(image_all.shape)
 
@@ -174,8 +187,8 @@ def train(config):
                     image_row = torch.cat((image_row, sub_image_list[j]), 1)
                 '''
                 image_all = torch.cat([image_all, image_row], 0)
-            image_name = config.sample_output_folder
             '''
+            image_name = config.sample_output_folder
             print(image_name)
             image_name = image_name + str(iter_val + 1)
             print(image_name)
@@ -189,7 +202,7 @@ def train(config):
             '''
             print("image_all_shape:")
             print(image_all.shape)
-            #torchvision.utils.save_image(image_all, image_name)
+            # torchvision.utils.save_image(image_all, image_name)
             torchvision.utils.save_image(image_all, "/content/drive/MyDrive/AOD-Net/sampleoutputPaht/a_cal.jpg")
 
             # ------------------------------------------------------------------#
@@ -211,7 +224,7 @@ def train(config):
                 image_all_ori = torch.cat([image_all_ori, image_row], 0)
             image_name = config.sample_output_folder + str(iter_val + 1) + "_ori.jpg"
             print(image_name)
-            #torchvision.utils.save_image(image_all_ori, image_name)
+            # torchvision.utils.save_image(image_all_ori, image_name)
             image_name3 = str(iter_val + 1) + "_ori.jpg"
             torchvision.utils.save_image(image_all, "/content/drive/MyDrive/AOD-Net/sampleoutputPaht/" + image_name3)
             # ------------------------------------------------------------------#
@@ -245,8 +258,8 @@ if __name__ == "__main__":
 
     config = parser.parse_args()
 
-    print("snapshots_folder:"+config.snapshots_folder)
-    print("sample_output_folder:"+config.sample_output_folder)
+    print("snapshots_folder:" + config.snapshots_folder)
+    print("sample_output_folder:" + config.sample_output_folder)
 
     if not os.path.exists(config.snapshots_folder):
         os.mkdir(config.snapshots_folder)
@@ -279,7 +292,3 @@ for i in range(1, len(list_image), 20):
     img_full = np.concatenate([img_full, img_row], 0)
 #imwrite("result_3x3.jpg", img_full)
 '''
-
-
-
-
