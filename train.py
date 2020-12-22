@@ -165,10 +165,16 @@ def train(config):
                 sub_image_list.append(clean_image)
                 ori_sub_image_list.append(unit_img_orig)
 
+            print("num_width-tensor:")
+            print(bl_num_width)
             num_width = int(bl_num_width[iter_val].item())
             print("num_width:" + str(num_width))
+
+            print("num_height-tensor:")
+            print(bl_num_height)
             num_height = int(bl_num_height[iter_val].item())
             print("num_height:" + str(num_height))
+
             full_bk_num = num_width * num_height
 
             # ------------------------------------------------------------------#
@@ -182,14 +188,18 @@ def train(config):
             for j in range(2, num_width):
                 image_all = torch.cat((image_all,sub_image_list[j]), 1)
             '''
+
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(sub_image_list[i:i + num_width], 3)
+
                 '''
                 image_row = torch.cat((sub_image_list[i],sub_image_list[i +1]), 1)
                 for j in range(i+2, num_width):
                     image_row = torch.cat((image_row, sub_image_list[j]), 1)
                 '''
+
                 image_all = torch.cat([image_all, image_row], 2)
+
             '''
             image_name = config.sample_output_folder
             print(image_name)
