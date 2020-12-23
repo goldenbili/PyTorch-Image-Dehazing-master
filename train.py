@@ -77,18 +77,32 @@ def train(config):
         # img_orig , img_haze 是包含 iteration 個圖片的 tensor 資料集 , 訓練時會一口氣訓練 iteration 個圖片.
         # 有點像將圖片橫向拼起來 實際上是不同維度.
         for iteration, (img_orig, img_haze, bl_num_width, bl_num_height) in enumerate(train_loader):
+            train_batch_size = config.train_batch_size
+            print("img_orig type:")
+            print(img_orig.type)
+            int("size:")
+            print(img_orig.size)
+            print("shape:")
+            print(img_orig.shape)
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
+                print("unit_img_orig type:")
+                print(unit_img_orig.type)
+                print("size:")
+                print(unit_img_orig.size)
+                print("shape:")
+                print(unit_img_orig.shape)
                 # train stage
                 if use_gpu:
                     unit_img_orig = unit_img_orig.cuda()
                     unit_img_haze = unit_img_haze.cuda()
 
+
+
                 clean_image = dehaze_net(unit_img_haze)
 
                 loss = criterion(clean_image, unit_img_orig)
-
 
                 if torch.isnan(unit_img_haze).any() or torch.isinf(clean_image).any():
                     print("unit_img_haze:")
@@ -105,8 +119,6 @@ def train(config):
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(dehaze_net.parameters(), config.grad_clip_norm)
                 optimizer.step()
-
-
 
                 # show loss every config.display_block_iter
                 if ((index + 1) % config.display_block_iter) == 0:
@@ -138,17 +150,17 @@ def train(config):
 
                     if ((iteration + 1) % config.display_iter) == 0:
                         print("Loss at iteration", iteration + 1, ":", loss.item())
-                    '''
+
                     if ((iteration + 1) % config.snapshot_iter) == 0:
                         torch.save(dehaze_net.state_dict(),
                                    config.snapshots_folder + "Epoch" + str(epoch) + "_" + str(index) + '.pth')
-                    '''
 
         # Validation Stage
 
         for iter_val, (img_orig, img_haze, bl_num_width, bl_num_height) in enumerate(val_loader):
             sub_image_list = []
             ori_sub_image_list = []
+            valid_batch_size = config.val_batch_size
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
@@ -165,58 +177,35 @@ def train(config):
                 sub_image_list.append(clean_image)
                 ori_sub_image_list.append(unit_img_orig)
 
+            '''
             print("iter_val:"+str(iter_val))
+            
             print("num_width-tensor:")
             print(bl_num_width)
+            '''
             num_width = int(bl_num_width[iter_val].item())
-            print("num_width:" + str(num_width))
+            #print("num_width:" + str(num_width))
 
+            '''
             print("num_height-tensor:")
             print(bl_num_height)
+            '''
             num_height = int(bl_num_height[iter_val].item())
-            print("num_height:" + str(num_height))
-
+            #print("num_height:" + str(num_height))
             full_bk_num = num_width * num_height
 
             # ------------------------------------------------------------------#
             image_all = torch.cat((sub_image_list[:num_width]), 3)
-            print("Merge image1.index" + str(iter_val))
-            print("image_all.shape")
-            print(image_all.shape)
-
-            '''
-            image_all = torch.cat((sub_image_list[0],sub_image_list[1]), 1)
-            for j in range(2, num_width):
-                image_all = torch.cat((image_all,sub_image_list[j]), 1)
-            '''
+            #print("Merge image1.index" + str(iter_val))
+            #print("image_all.shape")
 
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(sub_image_list[i:i + num_width], 3)
-
-                '''
-                image_row = torch.cat((sub_image_list[i],sub_image_list[i +1]), 1)
-                for j in range(i+2, num_width):
-                    image_row = torch.cat((image_row, sub_image_list[j]), 1)
-                '''
-
                 image_all = torch.cat([image_all, image_row], 2)
-
-            '''
-            image_name = config.sample_output_folder
-            print(image_name)
-            image_name = image_name + str(iter_val + 1)
-            print(image_name)
-            image_name = image_name + "_cal.jpg"
-            print(image_name)
-            image_name2 = str(iter_val + 1) + "_cal.jpg"
-            print("image_all_shape:")
-            print(image_all.shape)
-            print("image_all:")
-            print(image_all)
             '''
             print("image_all_shape:")
             print(image_all.shape)
-            # torchvision.utils.save_image(image_all, image_name)
+            '''
             torchvision.utils.save_image(image_all, "/content/drive/MyDrive/AOD-Net/sampleoutputPaht/a_cal.jpg")
 
             # ------------------------------------------------------------------#
@@ -260,7 +249,7 @@ if __name__ == "__main__":
     parser.add_argument('--val_batch_size', type=int, default=1)
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--display_iter', type=int, default=10)
-    parser.add_argument('--display_block_iter', type=int, default=20)
+    parser.add_argument('--display_block_iter', type=int, default=150)
     parser.add_argument('--snapshot_iter', type=int, default=3000)
     parser.add_argument('--snapshots_folder', type=str, default="snapshots/")
     parser.add_argument('--sample_output_folder', type=str, default="samples/")
