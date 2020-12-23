@@ -123,8 +123,8 @@ def train(config):
 
                 # show loss every config.display_block_iter
                 if ((index + 1) % config.display_block_iter) == 0:
-                    print("Loss at index_", index + 1, "/", str(len(img_orig)), ":iteration_", iteration + 1, ":",
-                          loss.item())
+                    print("Loss at Ephch:" + str(epoch) + "_index:", index + 1, "/", str(len(img_orig)),
+                          "_iter:", iteration + 1, "_Loss value:", loss.item())
                 # save snapshot every save_counter times
                 if ((save_counter + 1) % config.snapshot_iter) == 0:
                     '''
@@ -164,16 +164,15 @@ def train(config):
                     unit_img_haze = unit_img_haze.cuda()
 
                 clean_image = dehaze_net(unit_img_haze)
-
-                print("sub image. index" + str(index))
+                '''
+                print("sub image index:" + str(index))
                 print(clean_image.shape)
-
+                '''
                 sub_image_list.append(clean_image)
                 ori_sub_image_list.append(unit_img_orig)
 
             '''
             print("iter_val:"+str(iter_val))
-            
             print("num_width-tensor:")
             print(bl_num_width)
             '''
@@ -206,7 +205,8 @@ def train(config):
             print("image_all_shape:")
             print(image_all.shape)
             '''
-            torchvision.utils.save_image(image_all, config.sample_output_folder + str(iter_val + 1) + "_cal.jpg")
+            torchvision.utils.save_image(image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
+                                         "_Index:" +str(iter_val + 1) + "_cal.jpg")
 
             # ------------------------------------------------------------------#
 
@@ -228,8 +228,8 @@ def train(config):
             image_name = config.sample_output_folder + str(iter_val + 1) + "_ori.jpg"
             print(image_name)
             # torchvision.utils.save_image(image_all_ori, image_name)
-            image_name3 = str(iter_val + 1) + "_ori.jpg"
-            torchvision.utils.save_image(image_all, "/content/drive/MyDrive/AOD-Net/sampleoutputPaht/" + image_name3)
+            torchvision.utils.save_image(image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
+                                         "_Index:" +str(iter_val + 1) + "_ori.jpg")
             # ------------------------------------------------------------------#
 
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
