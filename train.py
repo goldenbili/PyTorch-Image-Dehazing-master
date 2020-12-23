@@ -180,7 +180,7 @@ def train(config):
             print(bl_num_width)
             '''
             print(data_path)
-            temp_data_path = data_path[0].item()
+            temp_data_path = data_path[0]
             print("temp_data_path.type")
             print(temp_data_path.type)
             print('temp_data_path:')
