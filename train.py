@@ -181,10 +181,11 @@ def train(config):
             '''
             print(data_path)
             temp_data_path = data_path[0]
-            print("temp_data_path.type")
-            print(temp_data_path.type)
             print('temp_data_path:')
             print(temp_data_path)
+            OrImagName = temp_data_path.split("/")[-1]
+            OrImageName = OrImageName.split(".")[0]
+            print(OrImageName)
 
             num_width = int(bl_num_width[0].item())
             #num_width = int(bl_num_width[iter_val].item())
@@ -212,7 +213,7 @@ def train(config):
             print(image_all.shape)
             '''
             torchvision.utils.save_image(image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" +str(iter_val + 1) + "_cal.jpg")
+                                         "_Index:" +str(iter_val + 1) + "_" + OrImageName + "_cal.jpg")
 
             # ------------------------------------------------------------------#
 
@@ -235,7 +236,7 @@ def train(config):
             print(image_name)
             # torchvision.utils.save_image(image_all_ori, image_name)
             torchvision.utils.save_image(image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1) + "_ori.jpg")
+                                         "_Index:" + str(iter_val + 1)  + "_" + OrImageName + "_ori.jpg")
             # ------------------------------------------------------------------#
 
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
