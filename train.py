@@ -76,7 +76,7 @@ def train(config):
         # 有 iteration 張一起訓練.
         # img_orig , img_haze 是包含 iteration 個圖片的 tensor 資料集 , 訓練時會一口氣訓練 iteration 個圖片.
         # 有點像將圖片橫向拼起來 實際上是不同維度.
-        for iteration, (img_orig, img_haze, bl_num_width, bl_num_height) in enumerate(train_loader):
+        for iteration, (img_orig, img_haze, bl_num_width, bl_num_height, data_path) in enumerate(train_loader):
             train_batch_size = config.train_batch_size
             #print("img_orig type:")
             #print(img_orig.type)
@@ -103,7 +103,6 @@ def train(config):
                     unit_img_haze = unit_img_haze.cuda()
 
 
-
                 clean_image = dehaze_net(unit_img_haze)
 
                 loss = criterion(clean_image, unit_img_orig)
@@ -116,8 +115,6 @@ def train(config):
                     print("clean_image:")
                     print(clean_image.shape)
                     print(clean_image)
-
-
 
                 optimizer.zero_grad()
                 loss.backward()
@@ -154,7 +151,7 @@ def train(config):
 
         # Validation Stage
 
-        for iter_val, (img_orig, img_haze, bl_num_width, bl_num_height) in enumerate(val_loader):
+        for iter_val, (img_orig, img_haze, bl_num_width, bl_num_height, data_path) in enumerate(val_loader):
             sub_image_list = []
             ori_sub_image_list = []
             valid_batch_size = config.val_batch_size
@@ -180,6 +177,10 @@ def train(config):
             print("num_width-tensor:")
             print(bl_num_width)
             '''
+            data_path = data_path[0].item()
+            print('data_path:')
+            print(data_path)
+
             num_width = int(bl_num_width[0].item())
             #num_width = int(bl_num_width[iter_val].item())
             #print("num_width:" + str(num_width))
@@ -205,7 +206,7 @@ def train(config):
             print("image_all_shape:")
             print(image_all.shape)
             '''
-            torchvision.utils.save_image(image_all, "/content/drive/MyDrive/AOD-Net/sampleoutputPaht/a_cal.jpg")
+            torchvision.utils.save_image(image_all, config.sample_output_folder + str(iter_val + 1) + "_cal.jpg")
 
             # ------------------------------------------------------------------#
 
