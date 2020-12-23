@@ -80,23 +80,23 @@ def train(config):
             train_batch_size = config.train_batch_size
             #print("img_orig type:")
             #print(img_orig.type)
-            int("size:")
-            print(img_orig.size)
-            print("shape:")
-            print(img_orig.shape)
-            print("bl_num_width.type:")
-            print(bl_num_width.type)
-            print("shape:")
-            print(bl_num_width.shape)
+            if save_counter==0:
+                print("img_orig.size:")
+                print(len(img_orig))
+                print("bl_num_width.type:")
+                print(bl_num_width.type)
+                print("shape:")
+                print(bl_num_width.shape)
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
-                print("unit_img_orig type:")
-                print(unit_img_orig.type)
-                print("size:")
-                print(unit_img_orig.size)
-                print("shape:")
-                print(unit_img_orig.shape)
+                if save_counter == 0:
+                    print("unit_img_orig type:")
+                    print(unit_img_orig.type)
+                    print("size:")
+                    print(unit_img_orig.size)
+                    print("shape:")
+                    print(unit_img_orig.shape)
                 # train stage
                 if use_gpu:
                     unit_img_orig = unit_img_orig.cuda()
@@ -150,14 +150,7 @@ def train(config):
                     #           config.snapshots_folder , "Epoch:", str(epoch), "
                     #           _TrainTimes:", str(save_counter+1), ".pth")
 
-                    save_counter = save_counter + 1
-
-                    if ((iteration + 1) % config.display_iter) == 0:
-                        print("Loss at iteration", iteration + 1, ":", loss.item())
-
-                    if ((iteration + 1) % config.snapshot_iter) == 0:
-                        torch.save(dehaze_net.state_dict(),
-                                   config.snapshots_folder + "Epoch" + str(epoch) + "_" + str(index) + '.pth')
+                save_counter = save_counter + 1
 
         # Validation Stage
 
@@ -187,14 +180,16 @@ def train(config):
             print("num_width-tensor:")
             print(bl_num_width)
             '''
-            num_width = int(bl_num_width[iter_val].item())
+            num_width = int(bl_num_width[0].item())
+            #num_width = int(bl_num_width[iter_val].item())
             #print("num_width:" + str(num_width))
 
             '''
             print("num_height-tensor:")
             print(bl_num_height)
             '''
-            num_height = int(bl_num_height[iter_val].item())
+            num_height = int(bl_num_height[0].item())
+            #num_height = int(bl_num_height[iter_val].item())
             #print("num_height:" + str(num_height))
             full_bk_num = num_width * num_height
 
