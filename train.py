@@ -184,7 +184,8 @@ def train(config):
             print('temp_data_path:')
             print(temp_data_path)
             OrImagName = temp_data_path.split("/")[-1]
-            OrImageName = OrImageName.split(".")[0]
+            print(OrImageName)
+            OrImageName = OrImageName.split(".")[1]
             print(OrImageName)
 
             num_width = int(bl_num_width[0].item())
