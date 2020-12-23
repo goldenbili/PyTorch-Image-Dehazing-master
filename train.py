@@ -87,6 +87,11 @@ def train(config):
                 print(bl_num_width.type)
                 print("shape:")
                 print(bl_num_width.shape)
+
+            num_width = int(bl_num_width[0].item())
+            num_height = int(bl_num_height[0].item())
+            full_bk_num = num_width * num_height
+            display_block_iter = full_bk_num/config.display_block_iter
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
@@ -122,9 +127,9 @@ def train(config):
                 optimizer.step()
 
                 # show loss every config.display_block_iter
-                if ((index + 1) % config.display_block_iter) == 0:
-                    print("Loss at Ephch:" + str(epoch) + "_index:", index + 1, "/", str(len(img_orig)),
-                          "_iter:", iteration + 1, "_Loss value:", loss.item())
+                if ((index + 1) % display_block_iter) == 0:
+                    print("Loss at Ephch:" + str(epoch) + "_index:" + index + 1 + "/" + str(len(img_orig)),
+                          "_iter:" + iteration + 1 + "_Loss value:" + loss.item())
                 # save snapshot every save_counter times
                 if ((save_counter + 1) % config.snapshot_iter) == 0:
                     '''
@@ -176,9 +181,10 @@ def train(config):
             print("num_width-tensor:")
             print(bl_num_width)
             '''
-            data_path = data_path[0].item()
-            print('data_path:')
             print(data_path)
+            temp_data_path = str(data_path[0].item())
+            print('data_path:')
+            print(temp_data_path)
 
             num_width = int(bl_num_width[0].item())
             #num_width = int(bl_num_width[iter_val].item())
@@ -249,7 +255,7 @@ if __name__ == "__main__":
     parser.add_argument('--val_batch_size', type=int, default=1)
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--display_iter', type=int, default=10)
-    parser.add_argument('--display_block_iter', type=int, default=150)
+    parser.add_argument('--display_block_iter', type=int, default=6)
     parser.add_argument('--snapshot_iter', type=int, default=3000)
     parser.add_argument('--snapshots_folder', type=str, default="snapshots/")
     parser.add_argument('--sample_output_folder', type=str, default="samples/")
