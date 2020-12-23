@@ -41,8 +41,6 @@ def train(config):
     bk_width = config.block_width
     bk_height = config.block_height
     resize = config.resize
-    print(config.snapshots_folder)
-    print(config.sample_output_folder)
 
     if use_gpu:
         dehaze_net = net.dehaze_net().cuda()
@@ -128,8 +126,8 @@ def train(config):
 
                 # show loss every config.display_block_iter
                 if ((index + 1) % display_block_iter) == 0:
-                    print("Loss at Ephch:" + str(epoch) + "_index:" + str(index + 1) + "/" + str(len(img_orig)),
-                          "_iter:" + str(iteration + 1) + "_Loss value:" + str(loss.item()) )
+                    print("Loss at Ephch:" + str(epoch) + "_index:" + str(index + 1) + "/" + str(len(img_orig)) +
+                          "_iter:" + str(iteration + 1) + "_Loss value:" + str(loss.item()))
                 # save snapshot every save_counter times
                 if ((save_counter + 1) % config.snapshot_iter) == 0:
                     '''
@@ -182,8 +180,10 @@ def train(config):
             print(bl_num_width)
             '''
             print(data_path)
-            temp_data_path = str(data_path[0].item())
-            print('data_path:')
+            temp_data_path = data_path[0].item()
+            print("temp_data_path.type")
+            print(temp_data_path.type)
+            print('temp_data_path:')
             print(temp_data_path)
 
             num_width = int(bl_num_width[0].item())
@@ -266,9 +266,8 @@ if __name__ == "__main__":
     parser.add_argument('--block_height', type=int, default=32)
 
     config = parser.parse_args()
-
     print("snapshots_folder:" + config.snapshots_folder)
-    print("sample_output_folder:" + config.sample_output_folder)
+    print("sample_output_folder:"+config.sample_output_folder)
 
     if not os.path.exists(config.snapshots_folder):
         os.mkdir(config.snapshots_folder)
