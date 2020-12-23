@@ -78,12 +78,16 @@ def train(config):
         # 有點像將圖片橫向拼起來 實際上是不同維度.
         for iteration, (img_orig, img_haze, bl_num_width, bl_num_height) in enumerate(train_loader):
             train_batch_size = config.train_batch_size
-            print("img_orig type:")
-            print(img_orig.type)
+            #print("img_orig type:")
+            #print(img_orig.type)
             int("size:")
             print(img_orig.size)
             print("shape:")
             print(img_orig.shape)
+            print("bl_num_width.type:")
+            print(bl_num_width.type)
+            print("shape:")
+            print(bl_num_width.shape)
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
