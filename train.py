@@ -127,7 +127,7 @@ def train(config):
                 # show loss every config.display_block_iter
                 if ((index + 1) % display_block_iter) == 0:
                     print("Loss at Ephch:" + str(epoch) + "_index:" + str(index + 1) + "/" + str(len(img_orig)) +
-                          "_iter:" + str(iteration + 1) + "_Loss value:" + str(loss.item()))
+                          "_iter:" + str(iteration + 1) + "_Lossalue:" + str(loss.item()))
                 # save snapshot every save_counter times
                 if ((save_counter + 1) % config.snapshot_iter) == 0:
                     '''
