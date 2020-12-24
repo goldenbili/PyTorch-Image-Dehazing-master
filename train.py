@@ -95,9 +95,9 @@ def train(config):
                 unit_img_haze = img_haze[index]
                 if save_counter == 0:
                     print("unit_img_orig type:")
-                    print(unit_img_orig.type)
+                    print(unit_img_orig.type())
                     print("size:")
-                    print(unit_img_orig.size)
+                    print(unit_img_orig.size())
                     print("shape:")
                     print(unit_img_orig.shape)
                 # train stage
@@ -171,9 +171,18 @@ def train(config):
                 print("sub image index:" + str(index))
                 print(clean_image.shape)
                 '''
+
+
+                # 先把 yuv 轉回 rgb
+                '''
+                R = Y + 1.14V
+                G = Y - 0.39U - 0.58V
+                B = Y + 2.03U
+                '''
+
+                #
                 sub_image_list.append(clean_image)
                 ori_sub_image_list.append(unit_img_orig)
-
             '''
             print("iter_val:"+str(iter_val))
             print("num_width-tensor:")
@@ -255,7 +264,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_epochs', type=int, default=10)
     parser.add_argument('--train_batch_size', type=int, default=1)
     parser.add_argument('--val_batch_size', type=int, default=1)
-    parser.add_argument('--num_workers', type=int, default=4)
+    parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--display_iter', type=int, default=10)
     parser.add_argument('--display_block_iter', type=int, default=6)
     parser.add_argument('--snapshot_iter', type=int, default=3000)
