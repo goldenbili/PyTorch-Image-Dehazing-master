@@ -222,7 +222,7 @@ class dehazing_loader(data.Dataset):
 
         # list_tensor_yuv420.append(torch.from_numpy(yuv420).float())
 
-        return list_tensor_yuv444, list_tensor_yuv420, list_tensor_rgb, bl_num_width, bl_num_height
+        return list_tensor_yuv444, list_tensor_yuv420, list_tensor_rgb, bl_num_width, bl_num_height, data_orig_path
 
     def __len__(self):
         return len(self.data_list)
