@@ -28,10 +28,10 @@ Q: loss function 的 Y 永遠是對的 這樣會不會影響訓練效果
 
 
 def weights_init(m):
-    classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
+    class_name = m.__class__.__name__
+    if class_name.find('Conv') != -1:
         m.weight.data.normal_(0.0, 0.02)
-    elif classname.find('BatchNorm') != -1:
+    elif class_name.find('BatchNorm') != -1:
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
@@ -74,11 +74,9 @@ def train(config):
         # 有 iteration 張一起訓練.
         # img_orig , img_haze 是包含 iteration 個圖片的 tensor 資料集 , 訓練時會一口氣訓練 iteration 個圖片.
         # 有點像將圖片橫向拼起來 實際上是不同維度.
-        for iteration, (img_orig, img_haze, bl_num_width, bl_num_height, data_path) in enumerate(train_loader):
-            train_batch_size = config.train_batch_size
-            #print("img_orig type:")
-            #print(img_orig.type)
-            if save_counter==0:
+        for iteration, (img_orig, img_haze, rgb,  bl_num_width, bl_num_height, data_path) in enumerate(train_loader):
+
+            if save_counter == 0:
                 print("img_orig.size:")
                 print(len(img_orig))
                 print("bl_num_width.type:")
@@ -89,7 +87,7 @@ def train(config):
             num_width = int(bl_num_width[0].item())
             num_height = int(bl_num_height[0].item())
             full_bk_num = num_width * num_height
-            display_block_iter = full_bk_num/config.display_block_iter
+            display_block_iter = full_bk_num / config.display_block_iter
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
@@ -104,7 +102,6 @@ def train(config):
                 if use_gpu:
                     unit_img_orig = unit_img_orig.cuda()
                     unit_img_haze = unit_img_haze.cuda()
-
 
                 clean_image = dehaze_net(unit_img_haze)
 
@@ -126,7 +123,7 @@ def train(config):
 
                 # show loss every config.display_block_iter
                 if ((index + 1) % display_block_iter) == 0:
-                    print("Loss at Ephch:" + str(epoch) + "_index:" + str(index + 1) + "/" + str(len(img_orig)) +
+                    print("Loss at Epoch:" + str(epoch) + "_index:" + str(index + 1) + "/" + str(len(img_orig)) +
                           "_iter:" + str(iteration + 1) + "_Loss value:" + str(loss.item()))
                 # save snapshot every save_counter times
                 if ((save_counter + 1) % config.snapshot_iter) == 0:
@@ -144,8 +141,8 @@ def train(config):
                     saveName = saveName + ".pth"
                     print(saveName)
                     '''
-                    saveName = "Epoch:" + str(epoch) + "_TrainTimes:" + str(save_counter + 1) + ".pth"
-                    torch.save(dehaze_net.state_dict(), config.snapshots_folder + saveName)
+                    save_name = "Epoch:" + str(epoch) + "_TrainTimes:" + str(save_counter + 1) + ".pth"
+                    torch.save(dehaze_net.state_dict(), config.snapshots_folder + save_name)
                     # torch.save(dehaze_net.state_dict(),
                     #           config.snapshots_folder , "Epoch:", str(epoch), "
                     #           _TrainTimes:", str(save_counter+1), ".pth")
@@ -154,24 +151,27 @@ def train(config):
 
         # Validation Stage
 
-        for iter_val, (img_orig, img_haze, bl_num_width, bl_num_height, data_path) in enumerate(val_loader):
+        for iter_val, (img_orig, img_haze, rgb, bl_num_width,  bl_num_height, data_path) in enumerate(val_loader):
             sub_image_list = []
             ori_sub_image_list = []
-            valid_batch_size = config.val_batch_size
+            rgb_image_list = []
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
+                unit_img_rgb = rgb[index]
+
                 # train stage
                 if use_gpu:
                     unit_img_orig = unit_img_orig.cuda()
                     unit_img_haze = unit_img_haze.cuda()
+                    unit_img_rgb = unit_img_rgb.cuda()
 
                 clean_image = dehaze_net(unit_img_haze)
+
                 '''
                 print("sub image index:" + str(index))
                 print(clean_image.shape)
                 '''
-
 
                 # 先把 yuv 轉回 rgb
                 '''
@@ -180,9 +180,10 @@ def train(config):
                 B = Y + 2.03U
                 '''
 
-                #
                 sub_image_list.append(clean_image)
                 ori_sub_image_list.append(unit_img_orig)
+                rgb_image_list.append(unit_img_rgb)
+
             '''
             print("iter_val:"+str(iter_val))
             print("num_width-tensor:")
@@ -192,28 +193,24 @@ def train(config):
             temp_data_path = data_path[0]
             print('temp_data_path:')
             print(temp_data_path)
-            OrImageName = temp_data_path.split("/")[-1]
-            print(OrImageName)
-            OrImageName = OrImageName.split(".")[0]
-            print(OrImageName)
+            orimage_name = temp_data_path.split("/")[-1]
+            print(orimage_name)
+            orimage_name = orimage_name.split(".")[0]
+            print(orimage_name)
 
             num_width = int(bl_num_width[0].item())
-            #num_width = int(bl_num_width[iter_val].item())
-            #print("num_width:" + str(num_width))
+            # num_width = int(bl_num_width[iter_val].item())
+            # print("num_width:" + str(num_width))
 
-            '''
-            print("num_height-tensor:")
-            print(bl_num_height)
-            '''
             num_height = int(bl_num_height[0].item())
-            #num_height = int(bl_num_height[iter_val].item())
-            #print("num_height:" + str(num_height))
+            # num_height = int(bl_num_height[iter_val].item())
+            # print("num_height:" + str(num_height))
             full_bk_num = num_width * num_height
 
             # ------------------------------------------------------------------#
             image_all = torch.cat((sub_image_list[:num_width]), 3)
-            #print("Merge image1.index" + str(iter_val))
-            #print("image_all.shape")
+            # print("Merge image1.index" + str(iter_val))
+            # print("image_all.shape")
 
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(sub_image_list[i:i + num_width], 3)
@@ -223,8 +220,7 @@ def train(config):
             print(image_all.shape)
             '''
             torchvision.utils.save_image(image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" +str(iter_val + 1) + "_" + OrImageName + "_cal.jpg")
-
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_cal.jpg")
             # ------------------------------------------------------------------#
 
             # ------------------------------------------------------------------#
@@ -246,7 +242,28 @@ def train(config):
             print(image_name)
             # torchvision.utils.save_image(image_all_ori, image_name)
             torchvision.utils.save_image(image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1)  + "_" + OrImageName + "_ori.jpg")
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_ori.jpg")
+            # ------------------------------------------------------------------#
+
+            # ------------------------------------------------------------------#
+            rgb_image_all = torch.cat(rgb_image_list[:num_width], 3)
+            '''
+            image_all_ori = torch.cat((ori_sub_image_list[0], ori_sub_image_list[1]), 1)
+            for j in range(2, num_width):
+                image_all_ori = torch.cat((image_all_ori, ori_sub_image_list[j]), 1)
+            '''
+            for i in range(num_width, full_bk_num, num_width):
+                image_row = torch.cat(rgb_image_list[i:i + num_width], 3)
+                '''
+                image_row = torch.cat((ori_sub_image_list[i],ori_sub_image_list[i +1]), 1)
+                for j in range(i+2, num_width):
+                    image_row = torch.cat((image_row, ori_sub_image_list[j]), 1)
+                '''
+                rgb_image_all = torch.cat([rgb_image_all, image_row], 2)
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb.jpg"
+            print(image_name)
+            torchvision.utils.save_image(rgb_image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb.jpg")
             # ------------------------------------------------------------------#
 
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
@@ -276,16 +293,16 @@ if __name__ == "__main__":
     parser.add_argument('--block_width', type=int, default=32)
     parser.add_argument('--block_height', type=int, default=32)
 
-    config = parser.parse_args()
-    print("snapshots_folder:" + config.snapshots_folder)
-    print("sample_output_folder:"+config.sample_output_folder)
+    conf = parser.parse_args()
+    print("snapshots_folder:" + conf.snapshots_folder)
+    print("sample_output_folder:" + conf.sample_output_folder)
 
-    if not os.path.exists(config.snapshots_folder):
-        os.mkdir(config.snapshots_folder)
-    if not os.path.exists(config.sample_output_folder):
-        os.mkdir(config.sample_output_folder)
+    if not os.path.exists(conf.snapshots_folder):
+        os.mkdir(conf.snapshots_folder)
+    if not os.path.exists(conf.sample_output_folder):
+        os.mkdir(conf.sample_output_folder)
 
-    train(config)
+    train(conf)
 
 '''
 list_image = []
