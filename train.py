@@ -51,6 +51,7 @@ def train(config):
         dehaze_net.load_state_dict(torch.load(config.snapshots_folder + config.snap_train_data))
     else:
         dehaze_net.apply(weights_init)
+    print(dehaze_net)
 
     train_dataset = dataloader.dehazing_loader(config.orig_images_path, 'train', resize, bk_width, bk_height)
     val_dataset = dataloader.dehazing_loader(config.orig_images_path, "val", resize, bk_width, bk_height)
@@ -127,20 +128,6 @@ def train(config):
                           "_iter:" + str(iteration + 1) + "_Loss value:" + str(loss.item()))
                 # save snapshot every save_counter times
                 if ((save_counter + 1) % config.snapshot_iter) == 0:
-                    '''
-                    saveName = config.snapshots_folder
-                    print(saveName)
-                    saveName = saveName + "_Epoch:"
-                    print(saveName)
-                    saveName = saveName + str(epoch)
-                    print(saveName)
-                    saveName = saveName + "_TrainTimes:"
-                    print(saveName)
-                    saveName = saveName + str(save_counter+1)
-                    print(saveName)
-                    saveName = saveName + ".pth"
-                    print(saveName)
-                    '''
                     save_name = "Epoch:" + str(epoch) + "_TrainTimes:" + str(save_counter + 1) + ".pth"
                     torch.save(dehaze_net.state_dict(), config.snapshots_folder + save_name)
                     # torch.save(dehaze_net.state_dict(),
@@ -273,18 +260,19 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     # Input Parameters
-    parser.add_argument('--orig_images_path', type=str, default="test_images/")
+    # parser.add_argument('--orig_images_path', type=str, default="test_images/")
     # parser.add_argument('--hzy_images_path', type=str, default="data/data/")
+    parser.add_argument('--orig_images_path', type=str, default="test_images/")
     parser.add_argument('--lr', type=float, default=0.0001)
     parser.add_argument('--weight_decay', type=float, default=0.0001)
     parser.add_argument('--grad_clip_norm', type=float, default=0.1)
-    parser.add_argument('--num_epochs', type=int, default=10)
+    parser.add_argument('--num_epochs', type=int, default=1)
     parser.add_argument('--train_batch_size', type=int, default=1)
     parser.add_argument('--val_batch_size', type=int, default=1)
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--display_iter', type=int, default=10)
     parser.add_argument('--display_block_iter', type=int, default=6)
-    parser.add_argument('--snapshot_iter', type=int, default=3000)
+    parser.add_argument('--snapshot_iter', type=int, default=10000)
     parser.add_argument('--snapshots_folder', type=str, default="snapshots/")
     parser.add_argument('--sample_output_folder', type=str, default="samples/")
     parser.add_argument('--snap_train_data', type=str, default="")
