@@ -148,18 +148,23 @@ def train(config):
                 unit_img_haze = img_haze[index]
                 unit_img_rgb = rgb[index]
 
-                # train stage
                 if use_gpu:
                     unit_img_orig = unit_img_orig.cuda()
                     unit_img_haze = unit_img_haze.cuda()
                     unit_img_rgb = unit_img_rgb.cuda()
 
                 clean_image = dehaze_net(unit_img_haze)
-
-                '''
-                print("sub image index:" + str(index))
-                print(clean_image.shape)
-                '''
+                if index == 0:
+                    print("sub image index:" + str(index))
+                    print("yuv444 tensor:")
+                    print(unit_img_orig.shape)
+                    print(unit_img_orig)
+                    print("yuv420 tensor:")
+                    print(clean_image.shape)
+                    print(clean_image)
+                    print("rgb tensor:")
+                    print(unit_img_rgb.shape)
+                    print(unit_img_rgb)
 
                 # 先把 yuv 轉回 rgb
                 '''
@@ -177,6 +182,7 @@ def train(config):
             print("num_width-tensor:")
             print(bl_num_width)
             '''
+
             print(data_path)
             temp_data_path = data_path[0]
             print('temp_data_path:')
