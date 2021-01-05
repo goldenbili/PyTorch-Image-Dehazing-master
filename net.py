@@ -32,19 +32,18 @@ class dehaze_net(nn.Module):
 
 		concat3 = torch.cat((x1,x2,x3,x4),1)
 
+		# TODO: (Finish): Way 1: e_conv5 (12:2) 當作 UV
 
-		#TODO: *
-		# Way 1: e_conv5 (12:2) 當作 UV
 		# 1. x 取sub matrix (沒有y)
 		x5 = self.relu(self.e_conv5(concat3))
-		x_sub = torch.narrow(x,1,1,2)
+		x_sub = torch.narrow(x, 1, 1, 2)
 		clean_image = self.relu((x5 * x_sub) - x5 + 1)
+
 		# 2. 完成 clean_image 後把y補回去
 		x_sub = torch.narrow(x, 1, 0, 1)
 		clean_image = torch.cat((x_sub,clean_image),1)
 
-		#TODO:
-		# Wat 2: 原本 e_conv5 (12:3) self , 結果再裁掉UV
+		# TODO: Wat 2: 原本 e_conv5 (12:3) , 再裁掉 Y
 		'''
 		x5 = self.relu(self.e_conv5(concat3))
 		clean_image = self.relu((x5 * x_sub) - x5 + 1)

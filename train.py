@@ -85,6 +85,7 @@ def train(config):
                 print("shape:")
                 print(bl_num_width.shape)
 
+            # train stage
             num_width = int(bl_num_width[0].item())
             num_height = int(bl_num_height[0].item())
             full_bk_num = num_width * num_height
@@ -99,7 +100,7 @@ def train(config):
                     print(unit_img_orig.size())
                     print("shape:")
                     print(unit_img_orig.shape)
-                # train stage
+
                 if use_gpu:
                     unit_img_orig = unit_img_orig.cuda()
                     unit_img_haze = unit_img_haze.cuda()
@@ -283,6 +284,7 @@ if __name__ == "__main__":
 
     conf = parser.parse_args()
     print("snapshots_folder:" + conf.snapshots_folder)
+    print("snap_train_data:" + conf.snap_train_data)
     print("sample_output_folder:" + conf.sample_output_folder)
 
     if not os.path.exists(conf.snapshots_folder):
