@@ -115,7 +115,6 @@ def bgr2yuv(data_orig, bk_w, bk_h):
 					im_new_U_Blk[y_blk, x_blk] = int(-0.1687 * r - 0.3313 * g + 0.5 * b + 128)
 					im_new_V_Blk[y_blk, x_blk] = int(0.5 * r - 0.4187 * g + - 0.0813 * b + 128)
 					# --------------------------#
-
 					# Block rgb
 					# --------------------------#
 					im_new_R_Blk[y_blk, x_blk] = r
@@ -202,7 +201,7 @@ class dehazing_loader(data.Dataset):
 		data_orig = Image.open(data_orig_path)
 		bl_num_width = data_orig.width/bkW
 		bl_num_height = data_orig.height/bkH
-
+		'''
 		if self.resize:
 			if self.mode == 'val':
 				data_orig = data_orig.resize((640, 480), Image.ANTIALIAS)
@@ -213,7 +212,7 @@ class dehazing_loader(data.Dataset):
 			data_orig = data_orig.resize((640, 480), Image.ANTIALIAS)
 			bl_num_width  = 640/bkW
 			bl_num_height = 480/bkH
-		'''
+
 		'''
 		data_orig = (np.asarray(data_orig)/255.0)
 

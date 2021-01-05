@@ -13,7 +13,6 @@ import net
 
 import cv2
 from cv2 import imwrite
-from google.colab.patches import cv2_imshow
 '''
 Willy: 
 作法：
@@ -143,6 +142,8 @@ def train(config):
             sub_image_list = []
             ori_sub_image_list = []
             rgb_image_list = []
+            rgb_list_from_sub = []
+            rgb_list_from_ori = []
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
@@ -154,6 +155,7 @@ def train(config):
                     unit_img_rgb = unit_img_rgb.cuda()
 
                 clean_image = dehaze_net(unit_img_haze)
+                '''
                 if index == 0:
                     print("sub image index:" + str(index))
                     print("yuv444 tensor:")
@@ -165,7 +167,7 @@ def train(config):
                     print("rgb tensor:")
                     print(unit_img_rgb.shape)
                     print(unit_img_rgb)
-
+                '''
                 # 先把 yuv 轉回 rgb
                 '''
                 R = Y + 1.4075 * (V - 128)
@@ -180,6 +182,14 @@ def train(config):
                 sub_image_list.append(clean_image)
                 ori_sub_image_list.append(unit_img_orig)
                 rgb_image_list.append(unit_img_rgb)
+
+                A = torch.tensor([[1., 1.,1.],
+                      [0., -0.39465, 2.03211],
+                      [1.13983, -0.58060, 0]])
+                rgb_unit_from_yuv420 = torch.tensordot(clean_image, A, 1).transpose(0, 2)
+                rgb_list_from_sub.append(rgb_unit_from_yuv420)
+                rgb_unit_from_yuv444 = torch.tensordot(unit_img_orig, A, 1).transpose(0, 2)
+                rgb_list_from_ori.append(rgb_unit_from_yuv444)
 
             '''
             print("iter_val:"+str(iter_val))
@@ -264,6 +274,47 @@ def train(config):
                                          "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb.jpg")
             # ------------------------------------------------------------------#
 
+            # ------------------------------------------------------------------#
+            rgb_from_420_image_all = torch.cat(rgb_list_from_sub[:num_width], 3)
+            '''
+            image_all_ori = torch.cat((ori_sub_image_list[0], ori_sub_image_list[1]), 1)
+            for j in range(2, num_width):
+                image_all_ori = torch.cat((image_all_ori, ori_sub_image_list[j]), 1)
+            '''
+            for i in range(num_width, full_bk_num, num_width):
+                image_row = torch.cat(rgb_list_from_sub[i:i + num_width], 3)
+                '''
+                image_row = torch.cat((ori_sub_image_list[i],ori_sub_image_list[i +1]), 1)
+                for j in range(i+2, num_width):
+                    image_row = torch.cat((image_row, ori_sub_image_list[j]), 1)
+                '''
+                rgb_from_420_image_all = torch.cat([rgb_from_420_image_all, image_row], 2)
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb422.jpg"
+            print(image_name)
+            torchvision.utils.save_image(rgb_from_420_image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb422.jpg")
+            # ------------------------------------------------------------------#
+
+            # ------------------------------------------------------------------#
+            rgb_from_444_image_all = torch.cat(rgb_list_from_ori[:num_width], 3)
+            '''
+            image_all_ori = torch.cat((ori_sub_image_list[0], ori_sub_image_list[1]), 1)
+            for j in range(2, num_width):
+                image_all_ori = torch.cat((image_all_ori, ori_sub_image_list[j]), 1)
+            '''
+            for i in range(num_width, full_bk_num, num_width):
+                image_row = torch.cat(rgb_list_from_ori[i:i + num_width], 3)
+                '''
+                image_row = torch.cat((ori_sub_image_list[i],ori_sub_image_list[i +1]), 1)
+                for j in range(i+2, num_width):
+                    image_row = torch.cat((image_row, ori_sub_image_list[j]), 1)
+                '''
+                rgb_from_444_image_all = torch.cat([rgb_from_444_image_all, image_row], 2)
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb444.jpg"
+            print(image_name)
+            torchvision.utils.save_image(rgb_from_444_image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb444.jpg")
+            # ------------------------------------------------------------------#
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
 
 
