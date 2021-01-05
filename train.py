@@ -13,7 +13,7 @@ import net
 
 import cv2
 from cv2 import imwrite
-
+from google.colab.patches import cv2_imshow
 '''
 Willy: 
 作法：
@@ -168,9 +168,13 @@ def train(config):
 
                 # 先把 yuv 轉回 rgb
                 '''
-                R = Y + 1.14V
-                G = Y - 0.39U - 0.58V
-                B = Y + 2.03U
+                R = Y + 1.4075 * (V - 128)
+                G = Y - 0.3455 * (U - 128) - (0.7169 * (V - 128))
+                B = Y + 1.7790 * (U - 128)
+                
+                R = Y + 1.402 (V-128)
+                G = Y - 0.34414 (U-128) - 0.71414 (V-128)
+                B = Y + 1.772 (U-128)
                 '''
 
                 sub_image_list.append(clean_image)
