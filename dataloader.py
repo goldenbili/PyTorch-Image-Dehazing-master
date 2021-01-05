@@ -202,7 +202,7 @@ class dehazing_loader(data.Dataset):
 		bl_num_width = data_orig.width/bkW
 		bl_num_height = data_orig.height/bkH
 		if self.resize:
-			data_orig = data_orig.resize((480, 640), Image.ANTIALIAS)
+			data_orig = data_orig.resize((640, 480), Image.ANTIALIAS)
 			bl_num_width  = 640/bkW
 			bl_num_height = 480/bkH
 
