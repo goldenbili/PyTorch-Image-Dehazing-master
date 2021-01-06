@@ -13,6 +13,7 @@ import net
 
 import cv2
 from cv2 import imwrite
+
 '''
 Willy: 
 作法：
@@ -24,6 +25,47 @@ Q: loss function 的 Y 永遠是對的 這樣會不會影響訓練效果
 1. net修改（o）
 2. 輸入:img->rgb->yuv444(ori-img)->yuv420(dehaze-img)（ing）
 '''
+
+
+def yuv2rgb(unit_yuv):
+    rgb_unit_from_yuv = unit_yuv.clone()
+    rgb_unit_from_yuv_ = rgb_unit_from_yuv[0]
+
+    rgb_unit_from_yuv_ = rgb_unit_from_yuv_.transpose(0, 2)
+
+    unit_width = rgb_unit_from_yuv_.shape[0]
+    unit_height = rgb_unit_from_yuv_.shape[1]
+
+    for h in range(unit_height):
+        for w in range(unit_width):
+            yuv = rgb_unit_from_yuv_[w][h]
+            y = yuv[0] * 255
+            u = yuv[1] * 255
+            v = yuv[2] * 255
+            r = int(y + 1.402 * (v - 128))
+            g = int(y - 0.34414 * (u - 128) - 0.71414 * (v - 128))
+            b = int(y + 1.772 * (u - 128))
+
+            if r < 0:
+                r = 0
+            elif r > 255:
+                r = 255
+            if g < 0:
+                g = 0
+            elif g > 255:
+                g = 255
+            if b < 0:
+                b = 0
+            elif b > 255:
+                b = 255
+            r = r / 255
+            g = g / 255
+            b = b / 255
+            rgb_unit_from_yuv_[w][h] = torch.tensor([r, g, b])
+
+    rgb_unit_from_yuv_ = rgb_unit_from_yuv_.transpose(0, 2)
+    rgb_unit_from_yuv = rgb_unit_from_yuv_.unsqueeze(0)
+    return rgb_unit_from_yuv
 
 
 def weights_init(m):
@@ -74,7 +116,7 @@ def train(config):
         # 有 iteration 張一起訓練.
         # img_orig , img_haze 是包含 iteration 個圖片的 tensor 資料集 , 訓練時會一口氣訓練 iteration 個圖片.
         # 有點像將圖片橫向拼起來 實際上是不同維度.
-        for iteration, (img_orig, img_haze, rgb,  bl_num_width, bl_num_height, data_path) in enumerate(train_loader):
+        for iteration, (img_orig, img_haze, rgb, bl_num_width, bl_num_height, data_path) in enumerate(train_loader):
 
             if save_counter == 0:
                 print("img_orig.size:")
@@ -137,13 +179,15 @@ def train(config):
                 save_counter = save_counter + 1
 
         # Validation Stage
+        # img_orig -> yuv444
+        # img_haze -> yuv420
+        for iter_val, (img_orig, img_haze, rgb, bl_num_width, bl_num_height, data_path) in enumerate(val_loader):
+            sub_image_list = []         # after deep_learning image (yuv422)
+            ori_sub_image_list = []     # yuv444 image
+            rgb_image_list = []         # block ori image (rgb)
+            rgb_list_from_sub = []      # rgb from clean image (yuv420)
+            rgb_list_from_ori = []      # rgb from haze image  (yuv420)
 
-        for iter_val, (img_orig, img_haze, rgb, bl_num_width,  bl_num_height, data_path) in enumerate(val_loader):
-            sub_image_list = []
-            ori_sub_image_list = []
-            rgb_image_list = []
-            rgb_list_from_sub = []
-            rgb_list_from_ori = []
             for index in range(len(img_orig)):
                 unit_img_orig = img_orig[index]
                 unit_img_haze = img_haze[index]
@@ -155,47 +199,13 @@ def train(config):
                     unit_img_rgb = unit_img_rgb.cuda()
 
                 clean_image = dehaze_net(unit_img_haze)
-                '''
-                if index == 0:
-                    print("sub image index:" + str(index))
-                    print("yuv444 tensor:")
-                    print(unit_img_orig.shape)
-                    print(unit_img_orig)
-                    print("yuv420 tensor:")
-                    print(clean_image.shape)
-                    print(clean_image)
-                    print("rgb tensor:")
-                    print(unit_img_rgb.shape)
-                    print(unit_img_rgb)
-                '''
-                # 先把 yuv 轉回 rgb
-                '''
-                R = Y + 1.4075 * (V - 128)
-                G = Y - 0.3455 * (U - 128) - (0.7169 * (V - 128))
-                B = Y + 1.7790 * (U - 128)
-                
-                R = Y + 1.402 (V-128)
-                G = Y - 0.34414 (U-128) - 0.71414 (V-128)
-                B = Y + 1.772 (U-128)
-                '''
 
                 sub_image_list.append(clean_image)
                 ori_sub_image_list.append(unit_img_orig)
                 rgb_image_list.append(unit_img_rgb)
 
-                A = torch.tensor([[1., 1.,1.],
-                      [0., -0.39465, 2.03211],
-                      [1.13983, -0.58060, 0]])
-                rgb_unit_from_yuv420 = torch.tensordot(clean_image, A, 1).transpose(0, 2)
-                rgb_list_from_sub.append(rgb_unit_from_yuv420)
-                rgb_unit_from_yuv444 = torch.tensordot(unit_img_orig, A, 1).transpose(0, 2)
-                rgb_list_from_ori.append(rgb_unit_from_yuv444)
-
-            '''
-            print("iter_val:"+str(iter_val))
-            print("num_width-tensor:")
-            print(bl_num_width)
-            '''
+                rgb_list_from_sub.append(yuv2rgb(clean_image))
+                rgb_list_from_ori.append(yuv2rgb(unit_img_haze))
 
             print(data_path)
             temp_data_path = data_path[0]
@@ -207,12 +217,7 @@ def train(config):
             print(orimage_name)
 
             num_width = int(bl_num_width[0].item())
-            # num_width = int(bl_num_width[iter_val].item())
-            # print("num_width:" + str(num_width))
-
             num_height = int(bl_num_height[0].item())
-            # num_height = int(bl_num_height[iter_val].item())
-            # print("num_height:" + str(num_height))
             full_bk_num = num_width * num_height
 
             # ------------------------------------------------------------------#
@@ -223,10 +228,7 @@ def train(config):
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(sub_image_list[i:i + num_width], 3)
                 image_all = torch.cat([image_all, image_row], 2)
-            '''
-            print("image_all_shape:")
-            print(image_all.shape)
-            '''
+
             torchvision.utils.save_image(image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
                                          "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_cal.jpg")
             # ------------------------------------------------------------------#
@@ -240,11 +242,6 @@ def train(config):
             '''
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(ori_sub_image_list[i:i + num_width], 3)
-                '''
-                image_row = torch.cat((ori_sub_image_list[i],ori_sub_image_list[i +1]), 1)
-                for j in range(i+2, num_width):
-                    image_row = torch.cat((image_row, ori_sub_image_list[j]), 1)
-                '''
                 image_all_ori = torch.cat([image_all_ori, image_row], 2)
             image_name = config.sample_output_folder + str(iter_val + 1) + "_ori.jpg"
             print(image_name)
@@ -253,13 +250,9 @@ def train(config):
                                          "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_ori.jpg")
             # ------------------------------------------------------------------#
 
+            # block rgb (test)
             # ------------------------------------------------------------------#
             rgb_image_all = torch.cat(rgb_image_list[:num_width], 3)
-            '''
-            image_all_ori = torch.cat((ori_sub_image_list[0], ori_sub_image_list[1]), 1)
-            for j in range(2, num_width):
-                image_all_ori = torch.cat((image_all_ori, ori_sub_image_list[j]), 1)
-            '''
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(rgb_image_list[i:i + num_width], 3)
                 '''
@@ -276,44 +269,25 @@ def train(config):
 
             # ------------------------------------------------------------------#
             rgb_from_420_image_all = torch.cat(rgb_list_from_sub[:num_width], 3)
-            '''
-            image_all_ori = torch.cat((ori_sub_image_list[0], ori_sub_image_list[1]), 1)
-            for j in range(2, num_width):
-                image_all_ori = torch.cat((image_all_ori, ori_sub_image_list[j]), 1)
-            '''
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(rgb_list_from_sub[i:i + num_width], 3)
-                '''
-                image_row = torch.cat((ori_sub_image_list[i],ori_sub_image_list[i +1]), 1)
-                for j in range(i+2, num_width):
-                    image_row = torch.cat((image_row, ori_sub_image_list[j]), 1)
-                '''
                 rgb_from_420_image_all = torch.cat([rgb_from_420_image_all, image_row], 2)
-            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb422.jpg"
+
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb_from_clean_422.jpg"
             print(image_name)
             torchvision.utils.save_image(rgb_from_420_image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb422.jpg")
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb_from_clean_422.jpg")
             # ------------------------------------------------------------------#
 
             # ------------------------------------------------------------------#
             rgb_from_444_image_all = torch.cat(rgb_list_from_ori[:num_width], 3)
-            '''
-            image_all_ori = torch.cat((ori_sub_image_list[0], ori_sub_image_list[1]), 1)
-            for j in range(2, num_width):
-                image_all_ori = torch.cat((image_all_ori, ori_sub_image_list[j]), 1)
-            '''
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(rgb_list_from_ori[i:i + num_width], 3)
-                '''
-                image_row = torch.cat((ori_sub_image_list[i],ori_sub_image_list[i +1]), 1)
-                for j in range(i+2, num_width):
-                    image_row = torch.cat((image_row, ori_sub_image_list[j]), 1)
-                '''
                 rgb_from_444_image_all = torch.cat([rgb_from_444_image_all, image_row], 2)
-            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb444.jpg"
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb_from_haze_422.jpg"
             print(image_name)
             torchvision.utils.save_image(rgb_from_444_image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb444.jpg")
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "__rgb_from_haze_422.jpg")
             # ------------------------------------------------------------------#
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
 
