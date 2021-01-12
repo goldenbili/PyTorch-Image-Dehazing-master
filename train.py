@@ -220,6 +220,7 @@ def train(config):
             num_height = int(bl_num_height[0].item())
             full_bk_num = num_width * num_height
 
+            # YUV422 & after deep learning
             # ------------------------------------------------------------------#
             image_all = torch.cat((sub_image_list[:num_width]), 3)
             # print("Merge image1.index" + str(iter_val))
@@ -230,9 +231,10 @@ def train(config):
                 image_all = torch.cat([image_all, image_row], 2)
 
             torchvision.utils.save_image(image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_cal.jpg")
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_cal.bmp")
             # ------------------------------------------------------------------#
 
+            # 
             # ------------------------------------------------------------------#
             image_all_ori = torch.cat(ori_sub_image_list[:num_width], 3)
             '''
@@ -243,11 +245,11 @@ def train(config):
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(ori_sub_image_list[i:i + num_width], 3)
                 image_all_ori = torch.cat([image_all_ori, image_row], 2)
-            image_name = config.sample_output_folder + str(iter_val + 1) + "_ori.jpg"
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_ori.bmp"
             print(image_name)
             # torchvision.utils.save_image(image_all_ori, image_name)
             torchvision.utils.save_image(image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_ori.jpg")
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_ori.bmp")
             # ------------------------------------------------------------------#
 
             # block rgb (test)
@@ -261,10 +263,10 @@ def train(config):
                     image_row = torch.cat((image_row, ori_sub_image_list[j]), 1)
                 '''
                 rgb_image_all = torch.cat([rgb_image_all, image_row], 2)
-            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb.jpg"
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb.bmp"
             print(image_name)
             torchvision.utils.save_image(rgb_image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb.jpg")
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb.bmp")
             # ------------------------------------------------------------------#
 
             # ------------------------------------------------------------------#
@@ -273,10 +275,10 @@ def train(config):
                 image_row = torch.cat(rgb_list_from_sub[i:i + num_width], 3)
                 rgb_from_420_image_all = torch.cat([rgb_from_420_image_all, image_row], 2)
 
-            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb_from_clean_422.jpg"
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb_from_clean_422.bmp"
             print(image_name)
             torchvision.utils.save_image(rgb_from_420_image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb_from_clean_422.jpg")
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb_from_clean_422.bmp")
             # ------------------------------------------------------------------#
 
             # ------------------------------------------------------------------#
@@ -284,10 +286,10 @@ def train(config):
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(rgb_list_from_ori[i:i + num_width], 3)
                 rgb_from_444_image_all = torch.cat([rgb_from_444_image_all, image_row], 2)
-            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb_from_haze_422.jpg"
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb_from_haze_422.bmp"
             print(image_name)
             torchvision.utils.save_image(rgb_from_444_image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "__rgb_from_haze_422.jpg")
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "__rgb_from_haze_422.bmp")
             # ------------------------------------------------------------------#
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
 
