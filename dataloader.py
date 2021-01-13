@@ -66,6 +66,11 @@ def bgr2yuv(data_orig, bk_w, bk_h):
 	R, G, B = getbgr(data_orig)
 	width = data_orig.width
 	height = data_orig.height
+	print('In the bgr2yuv')
+	print('width:')
+	print(width)
+	print('height')
+	print(height)
 
 	R = np.reshape(list(R.getdata()), (height, width))
 	G = np.reshape(list(G.getdata()), (height, width))
@@ -201,18 +206,17 @@ class dehazing_loader(data.Dataset):
 		data_orig = Image.open(data_orig_path)
 		bl_num_width = data_orig.width/bkW
 		bl_num_height = data_orig.height/bkH
-		'''
-		if self.resize:
-			if self.mode == 'val':
-				data_orig = data_orig.resize((640, 480), Image.ANTIALIAS)
-				bl_num_width  = 640/bkW
-				bl_num_height = 480/bkH
-		'''
+
 		if self.resize:
 			data_orig = data_orig.resize((640, 480), Image.ANTIALIAS)
 			bl_num_width  = 640/bkW
 			bl_num_height = 480/bkH
 
+		print('In the __getitem__')
+		print('width:')
+		print(data_orig.width)
+		print('height')
+		print(data_orig.height)
 		'''
 		data_orig = (np.asarray(data_orig)/255.0)
 
@@ -231,7 +235,7 @@ class dehazing_loader(data.Dataset):
 		print(len(data_yuv420))
 		print('size with data_rgb:')
 		print(len(data_rgb))
-		
+
 		list_tensor_yuv444 = []
 		list_tensor_yuv420 = []
 		list_tensor_rgb = []
