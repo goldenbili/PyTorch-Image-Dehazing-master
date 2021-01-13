@@ -66,11 +66,13 @@ def bgr2yuv(data_orig, bk_w, bk_h):
 	R, G, B = getbgr(data_orig)
 	width = data_orig.width
 	height = data_orig.height
+	'''
 	print('In the bgr2yuv')
 	print('width:')
 	print(width)
 	print('height')
 	print(height)
+	'''
 
 	R = np.reshape(list(R.getdata()), (height, width))
 	G = np.reshape(list(G.getdata()), (height, width))
@@ -208,25 +210,30 @@ class dehazing_loader(data.Dataset):
 		bl_num_width = data_orig.width/bkW
 		bl_num_height = data_orig.height/bkH
 
+		'''
 		print('In the __getitem__1')
 		print('width:')
 		print(data_orig.width)
 		print('height')
 		print(data_orig.height)
-
+		
 		if self.resize:
 			data_orig = data_orig.resize((640, 480), Image.ANTIALIAS)
 			bl_num_width  = 640/bkW
 			bl_num_height = 480/bkH
 
+		
+		print('self.resize:')
+		print(self.resize)
 		print('In the __getitem__2')
 		print('width:')
 		print(data_orig.width)
 		print('height')
 		print(data_orig.height)
+		'''
 
 		if data_orig.width == 640 and data_orig.height == 480:
-			data_orig.save("fileout"+self.temp_count+".png")
+			data_orig.save("fileout"+str(self.temp_count)+".png")
 			self.temp_count = self.temp_count + 1
 		'''
 		data_orig = (np.asarray(data_orig)/255.0)
