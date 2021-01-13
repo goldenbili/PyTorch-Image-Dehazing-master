@@ -197,6 +197,7 @@ class dehazing_loader(data.Dataset):
 		else:
 			self.data_list = self.val_list
 			print("Total validation examples:", len(self.val_list))
+		self.temp_count = 0
 
 	def __getitem__(self, index):
 		data_orig_path = self.data_list[index]
@@ -223,6 +224,10 @@ class dehazing_loader(data.Dataset):
 		print(data_orig.width)
 		print('height')
 		print(data_orig.height)
+
+		if data_orig.width == 640 and data_orig.height == 480:
+			data_orig.save("fileout"+self.temp_count+".png")
+			self.temp_count = self.temp_count + 1
 		'''
 		data_orig = (np.asarray(data_orig)/255.0)
 
