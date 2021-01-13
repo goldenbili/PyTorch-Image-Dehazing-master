@@ -182,7 +182,7 @@ def train(config):
         # img_orig -> yuv444
         # img_haze -> yuv420
         for iter_val, (img_orig, img_haze, rgb, bl_num_width, bl_num_height, data_path) in enumerate(val_loader):
-            sub_image_list = []         # after deep_learning image (yuv422)
+            sub_image_list = []         # after deep_learning image (yuv420)
             ori_sub_image_list = []     # yuv444 image
             rgb_image_list = []         # block ori image (rgb)
             rgb_list_from_sub = []      # rgb from clean image (yuv420)
@@ -197,6 +197,8 @@ def train(config):
                     unit_img_orig = unit_img_orig.cuda()
                     unit_img_haze = unit_img_haze.cuda()
                     unit_img_rgb = unit_img_rgb.cuda()
+
+                # TODO:
 
                 clean_image = dehaze_net(unit_img_haze)
 
@@ -275,10 +277,10 @@ def train(config):
                 image_row = torch.cat(rgb_list_from_sub[i:i + num_width], 3)
                 rgb_from_420_image_all = torch.cat([rgb_from_420_image_all, image_row], 2)
 
-            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb_from_clean_422.bmp"
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb_from_clean_420.bmp"
             print(image_name)
             torchvision.utils.save_image(rgb_from_420_image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb_from_clean_422.bmp")
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb_from_clean_420.bmp")
             # ------------------------------------------------------------------#
 
             # ------------------------------------------------------------------#
@@ -286,10 +288,10 @@ def train(config):
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(rgb_list_from_ori[i:i + num_width], 3)
                 rgb_from_444_image_all = torch.cat([rgb_from_444_image_all, image_row], 2)
-            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb_from_haze_422.bmp"
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb_from_haze_420.bmp"
             print(image_name)
             torchvision.utils.save_image(rgb_from_444_image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "__rgb_from_haze_422.bmp")
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "__rgb_from_haze_420.bmp")
             # ------------------------------------------------------------------#
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
 

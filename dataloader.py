@@ -225,6 +225,13 @@ class dehazing_loader(data.Dataset):
 
 		# data_orig to yuv444, yuv420
 		data_yuv444, data_yuv420, data_rgb = bgr2yuv(data_orig, bkW, bkH)
+		print('size with data_yuv444:')
+		print(len(data_yuv444))
+		print('size with data_yuv420:')
+		print(len(data_yuv420))
+		print('size with data_rgb:')
+		print(len(data_rgb))
+		
 		list_tensor_yuv444 = []
 		list_tensor_yuv420 = []
 		list_tensor_rgb = []
