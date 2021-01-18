@@ -82,6 +82,7 @@ def train(config):
     bk_width = config.block_width
     bk_height = config.block_height
     resize = config.resize
+    bTest = config.bTest
 
     if use_gpu:
         dehaze_net = net.dehaze_net().cuda()
@@ -94,8 +95,8 @@ def train(config):
         dehaze_net.apply(weights_init)
     print(dehaze_net)
 
-    train_dataset = dataloader.dehazing_loader(config.orig_images_path, 'train', resize, bk_width, bk_height)
-    val_dataset = dataloader.dehazing_loader(config.orig_images_path, "val", resize, bk_width, bk_height)
+    train_dataset = dataloader.dehazing_loader(config.orig_images_path, 'train', resize, bk_width, bk_height, bTest)
+    val_dataset = dataloader.dehazing_loader(config.orig_images_path, "val", resize, bk_width, bk_height, bTest)
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config.train_batch_size, shuffle=True,
                                                num_workers=config.num_workers, pin_memory=True)
@@ -117,7 +118,6 @@ def train(config):
         # img_orig , img_haze 是包含 iteration 個圖片的 tensor 資料集 , 訓練時會一口氣訓練 iteration 個圖片.
         # 有點像將圖片橫向拼起來 實際上是不同維度.
         for iteration, (img_orig, img_haze, rgb, bl_num_width, bl_num_height, data_path) in enumerate(train_loader):
-
             if save_counter == 0:
                 print("img_orig.size:")
                 print(len(img_orig))
@@ -141,6 +141,21 @@ def train(config):
                     print(unit_img_orig.size())
                     print("shape:")
                     print(unit_img_orig.shape)
+                '''
+                if bTest == 1:
+                    if save_counter ==0:
+                        numpy_ori = unit_img_orig.numpy().copy()
+                        print("data path:")
+                        print(data_path)
+                        print("index:"+str(index))
+
+                        for i in range(3):
+                            for j in range(32):
+                                print("before:")
+                                print(numpy_ori[index][i][j])
+                                print("after:")
+                                print(numpy_ori[index][i][j]*255)
+                '''
 
                 if use_gpu:
                     unit_img_orig = unit_img_orig.cuda()
@@ -183,7 +198,9 @@ def train(config):
         # img_haze -> yuv420
         for iter_val, (img_orig, img_haze, rgb, bl_num_width, bl_num_height, data_path) in enumerate(val_loader):
             sub_image_list = []         # after deep_learning image (yuv420)
+            sub_image_list_no_deep = [] # yuv420
             ori_sub_image_list = []     # yuv444 image
+
             rgb_image_list = []         # block ori image (rgb)
             rgb_list_from_sub = []      # rgb from clean image (yuv420)
             rgb_list_from_ori = []      # rgb from haze image  (yuv420)
@@ -193,16 +210,28 @@ def train(config):
                 unit_img_haze = img_haze[index]
                 unit_img_rgb = rgb[index]
 
+                # TODO: yuv444 ??? color is strange ...
+                '''
+                if bTest == 1 and index == 0:
+                    numpy_ori = unit_img_orig.numpy().copy()
+                    print("data path:")
+                    print(data_path)
+                    print("index:" + str(index))
+
+                    for i in range(3):
+                        for j in range(32):
+                            print(numpy_ori[index][i][j])
+                    bTest = 0
+                '''
                 if use_gpu:
                     unit_img_orig = unit_img_orig.cuda()
                     unit_img_haze = unit_img_haze.cuda()
                     unit_img_rgb = unit_img_rgb.cuda()
 
-                # TODO:
-
                 clean_image = dehaze_net(unit_img_haze)
 
                 sub_image_list.append(clean_image)
+                sub_image_list_no_deep.append(unit_img_haze)
                 ori_sub_image_list.append(unit_img_orig)
                 rgb_image_list.append(unit_img_rgb)
 
@@ -222,36 +251,49 @@ def train(config):
             num_height = int(bl_num_height[0].item())
             full_bk_num = num_width * num_height
 
-            # YUV422 & after deep learning
+            # YUV420 & after deep learning
             # ------------------------------------------------------------------#
             image_all = torch.cat((sub_image_list[:num_width]), 3)
-            # print("Merge image1.index" + str(iter_val))
-            # print("image_all.shape")
 
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(sub_image_list[i:i + num_width], 3)
                 image_all = torch.cat([image_all, image_row], 2)
 
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_yuv420_deep_learning.bmp"
+            print(image_name)
+
             torchvision.utils.save_image(image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_cal.bmp")
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_yuv420_deep.bmp")
             # ------------------------------------------------------------------#
 
-            # 
+            # YUV420 & without deep learning
+            # ------------------------------------------------------------------#
+            image_all_ori_no_deep = torch.cat((sub_image_list_no_deep[:num_width]), 3)
+
+            for i in range(num_width, full_bk_num, num_width):
+                image_row = torch.cat(sub_image_list_no_deep[i:i + num_width], 3)
+                image_all_ori_no_deep = torch.cat([image_all_ori_no_deep, image_row], 2)
+
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_yuv420_ori.bmp"
+            print(image_name)
+
+            torchvision.utils.save_image(image_all_ori_no_deep, config.sample_output_folder + "Epoch:" + str(epoch) +
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_yuv420_ori.bmp")
+            # ------------------------------------------------------------------#
+
+            # YUV444
             # ------------------------------------------------------------------#
             image_all_ori = torch.cat(ori_sub_image_list[:num_width], 3)
-            '''
-            image_all_ori = torch.cat((ori_sub_image_list[0], ori_sub_image_list[1]), 1)
-            for j in range(2, num_width):
-                image_all_ori = torch.cat((image_all_ori, ori_sub_image_list[j]), 1)
-            '''
+
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(ori_sub_image_list[i:i + num_width], 3)
                 image_all_ori = torch.cat([image_all_ori, image_row], 2)
-            image_name = config.sample_output_folder + str(iter_val + 1) + "_ori.bmp"
+
+            image_name = config.sample_output_folder + str(iter_val + 1) + "_yuv444.bmp"
             print(image_name)
             # torchvision.utils.save_image(image_all_ori, image_name)
-            torchvision.utils.save_image(image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
-                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_ori.bmp")
+            torchvision.utils.save_image(image_all_ori, config.sample_output_folder + "Epoch:" + str(epoch) +
+                                         "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_yuv444.bmp")
             # ------------------------------------------------------------------#
 
             # block rgb (test)
@@ -317,9 +359,10 @@ if __name__ == "__main__":
     parser.add_argument('--sample_output_folder', type=str, default="samples/")
     parser.add_argument('--snap_train_data', type=str, default="")
     parser.add_argument('--use_gpu', type=int, default=0)
-    parser.add_argument('--resize', type=bool, default=False)
+    parser.add_argument('--resize', type=int, default=0)
     parser.add_argument('--block_width', type=int, default=32)
     parser.add_argument('--block_height', type=int, default=32)
+    parser.add_argument('--bTest', type=int, default=1)
 
     conf = parser.parse_args()
     print("snapshots_folder:" + conf.snapshots_folder)
@@ -330,7 +373,8 @@ if __name__ == "__main__":
         os.mkdir(conf.snapshots_folder)
     if not os.path.exists(conf.sample_output_folder):
         os.mkdir(conf.sample_output_folder)
-
+    print('conf.resize:')
+    print(conf.resize)
     train(conf)
 
 '''

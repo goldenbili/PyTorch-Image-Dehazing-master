@@ -2,17 +2,13 @@
 dataloader Ver1
 """
 
-import os
-import sys
-
-import torch
-import torch.utils.data as data
-
-import numpy as np
-from PIL import Image
 import glob
 import random
-import cv2
+
+import numpy as np
+import torch
+import torch.utils.data as data
+from PIL import Image
 
 random.seed(1143)
 
@@ -185,13 +181,13 @@ def bgr2yuv(data_orig, bk_w, bk_h):
 
 class dehazing_loader(data.Dataset):
 
-	def __init__(self, orig_images_path, mode, resize, bk_width, bk_height):
-
+	def __init__(self, orig_images_path, mode, resize, bk_width, bk_height, btest):
 		self.train_list, self.val_list = populate_train_list(orig_images_path)
 		self.resize = resize
 		self.bkW = bk_width
 		self.bkH = bk_height
 		self.mode = mode
+		self.bTest = btest
 
 		if mode == 'train':
 			self.data_list = self.train_list
@@ -210,27 +206,10 @@ class dehazing_loader(data.Dataset):
 		bl_num_width = data_orig.width/bkW
 		bl_num_height = data_orig.height/bkH
 
-		'''
-		print('In the __getitem__1')
-		print('width:')
-		print(data_orig.width)
-		print('height')
-		print(data_orig.height)
-		
-		if self.resize:
+		if self.resize == 1:
 			data_orig = data_orig.resize((640, 480), Image.ANTIALIAS)
-			bl_num_width  = 640/bkW
+			bl_num_width = 640/bkW
 			bl_num_height = 480/bkH
-
-		
-		print('self.resize:')
-		print(self.resize)
-		print('In the __getitem__2')
-		print('width:')
-		print(data_orig.width)
-		print('height')
-		print(data_orig.height)
-		'''
 
 		if data_orig.width == 640 and data_orig.height == 480:
 			data_orig.save("fileout"+str(self.temp_count)+".png")
@@ -247,18 +226,27 @@ class dehazing_loader(data.Dataset):
 
 		# data_orig to yuv444, yuv420
 		data_yuv444, data_yuv420, data_rgb = bgr2yuv(data_orig, bkW, bkH)
+		'''
 		print('size with data_yuv444:')
 		print(len(data_yuv444))
 		print('size with data_yuv420:')
 		print(len(data_yuv420))
 		print('size with data_rgb:')
 		print(len(data_rgb))
+		'''
 
 		list_tensor_yuv444 = []
 		list_tensor_yuv420 = []
 		list_tensor_rgb = []
 		for yuv444 in data_yuv444:
-			yuv444 = (np.asarray(yuv444)/255.0)
+			# 測試板 外面量化
+			'''
+			if self.mode == 'train':
+				yuv444 = (np.asarray(yuv444)/255.0)
+			else:
+				print('Is bTest and valid ')
+			'''
+			yuv444 = (np.asarray(yuv444) / 255.0)
 			yuv444_unit = torch.from_numpy(yuv444).float()
 			list_tensor_yuv444.append(yuv444_unit)
 
