@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('--background', type=str, default='white')
     parser.add_argument('--load_path', type=str, default='')
 
-    parser.add_argument('--line_color', type=str, default='b')
+    parser.add_argument('--line_color', type=str, default='blue')
     parser.add_argument('--num_images', type=int, default=500)
 
     parser.add_argument('--thickness',type=int, default=1)
@@ -54,13 +54,13 @@ if __name__ == '__main__':
     color = [0,0,0]
     FileName = 'black_line'
 
-    if line_color == 'r':
+    if line_color == 'red':
         color = [0, 0, 255]
         FileName = 'red_line'
-    elif line_color == 'g':
+    elif line_color == 'green':
         color = [0, 255, 0]
         FileName = 'green_line'
-    elif line_color == 'b':
+    elif line_color == 'blue':
         color = [255, 0, 0]
         FileName = 'blue_line'
     elif line_color == 'random':
