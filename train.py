@@ -14,6 +14,8 @@ import net
 import cv2
 from cv2 import imwrite
 
+import piq
+
 '''
 Willy: 
 作法：
@@ -314,27 +316,51 @@ def train(config):
             # ------------------------------------------------------------------#
 
             # ------------------------------------------------------------------#
-            rgb_from_420_image_all = torch.cat(rgb_list_from_sub[:num_width], 3)
+            rgb_from_420_image_all_clear = torch.cat(rgb_list_from_sub[:num_width], 3)
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(rgb_list_from_sub[i:i + num_width], 3)
-                rgb_from_420_image_all = torch.cat([rgb_from_420_image_all, image_row], 2)
+                rgb_from_420_image_all_clear = torch.cat([rgb_from_420_image_all_clear, image_row], 2)
 
             image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb_from_clean_420.bmp"
             print(image_name)
-            torchvision.utils.save_image(rgb_from_420_image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
+            torchvision.utils.save_image(rgb_from_420_image_all_clear, config.sample_output_folder + "Epoch:" + str(epoch) +
                                          "_Index:" + str(iter_val + 1) + "_" + orimage_name + "_rgb_from_clean_420.bmp")
             # ------------------------------------------------------------------#
 
             # ------------------------------------------------------------------#
-            rgb_from_444_image_all = torch.cat(rgb_list_from_ori[:num_width], 3)
+            rgb_from_420_image_all_haze = torch.cat(rgb_list_from_ori[:num_width], 3)
             for i in range(num_width, full_bk_num, num_width):
                 image_row = torch.cat(rgb_list_from_ori[i:i + num_width], 3)
-                rgb_from_444_image_all = torch.cat([rgb_from_444_image_all, image_row], 2)
+                rgb_from_420_image_all_haze = torch.cat([rgb_from_420_image_all_haze, image_row], 2)
             image_name = config.sample_output_folder + str(iter_val + 1) + "_rgb_from_haze_420.bmp"
             print(image_name)
-            torchvision.utils.save_image(rgb_from_444_image_all, config.sample_output_folder + "Epoch:" + str(epoch) +
+            torchvision.utils.save_image(rgb_from_420_image_all_haze, config.sample_output_folder + "Epoch:" + str(epoch) +
                                          "_Index:" + str(iter_val + 1) + "_" + orimage_name + "__rgb_from_haze_420.bmp")
             # ------------------------------------------------------------------#
+
+            # To compute PSNR as a measure, use lower case function from the library.
+            # ------------------------------------------------------------------#
+            # rgb_from_420_image_all_haze rgb_image_all
+            # rgb_from_420_image_all_clear rgb_image_all
+            psnr_index = piq.psnr(rgb_from_420_image_all_haze, rgb_image_all, data_range=1., reduction='none')
+            print(f"PSNR haze: {psnr_index.item():0.4f}")
+
+            psnr_index = piq.psnr(rgb_from_420_image_all_clear, rgb_image_all, data_range=1., reduction='none')
+            print(f"PSNR clear: {psnr_index.item():0.4f}")
+            # ------------------------------------------------------------------#
+
+            # To compute SSIM as a measure, use lower case function from the library.
+            # ------------------------------------------------------------------#
+
+            ssim_index = piq.ssim(rgb_from_420_image_all_haze, rgb_image_all, data_range=1.)
+            ssim_loss: torch.Tensor = piq.SSIMLoss(data_range=1.)(rgb_from_420_image_all_haze, rgb_image_all)
+            print(f"SSIM haze index: {ssim_index.item():0.4f}, loss: {ssim_loss.item():0.4f}")
+
+            ssim_index = piq.ssim(rgb_from_420_image_all_clear, rgb_image_all, data_range=1.)
+            ssim_loss: torch.Tensor = piq.SSIMLoss(data_range=1.)(rgb_from_420_image_all_clear, rgb_image_all)
+            print(f"SSIM clear index: {ssim_index.item():0.4f}, loss: {ssim_loss.item():0.4f}")
+            # ------------------------------------------------------------------#
+
         torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth")
 
 
