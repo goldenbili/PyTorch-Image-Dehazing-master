@@ -14,11 +14,11 @@ if __name__ == '__main__':
     parser.add_argument('--min_range', type=int, default=4)
     parser.add_argument('--numWidth', type=int, default=3)
     parser.add_argument('--numHeight', type=int, default=3)
-    parser.add_argument('--background', type=str, default='white')
+    parser.add_argument('--background', type=str, default='black')
     parser.add_argument('--load_path', type=str, default='')
 
-    parser.add_argument('--line_color', type=str, default='blue')
-    parser.add_argument('--num_images', type=int, default=500)
+    parser.add_argument('--line_color', type=str, default='green')
+    parser.add_argument('--num_images', type=int, default=200)
 
     parser.add_argument('--thickness',type=int, default=1)
 
@@ -39,13 +39,10 @@ if __name__ == '__main__':
 
     # define background
     # ----------------------------------------------------- #
-    background = config.background
+    BackGroundName = config.background
     color_background = [0, 0, 0]
-    BackGroundName = 'black'
-    if background == 'white':
+    if BackGroundName == 'white':
         color_background = [255, 255, 255]
-        BackGroundName = 'white'
-
     # ----------------------------------------------------- #
 
     # define color
@@ -65,8 +62,12 @@ if __name__ == '__main__':
         FileName = 'blue_line'
     elif line_color == 'random':
         color = [randrange(256), randrange(256), randrange(256)]
-        while color == color_background:
-            color = [randrange(256), randrange(256), randrange(256)]
+        if BackGroundName == 'mix':
+            while color == [255, 255, 255] or color == [0,0,0]:
+                color = [randrange(256), randrange(256), randrange(256)]
+        else:
+            while color == color_background:
+                color = [randrange(256), randrange(256), randrange(256)]
         FileName = 'random_line'
     # ----------------------------------------------------- #
 
@@ -157,8 +158,11 @@ if __name__ == '__main__':
                 if h in pt_height or w in pt_width:
                     img[h, w] = color
                 else:
-                    if background == 'white':
+                    if BackGroundName == 'white':
                         img[h, w] = color_background
+                    elif BackGroundName == 'mix':
+                        if i%2 == 0:
+                            img[h, w] = [255, 255, 255]
 
         # save our image as a "jpg" image
         cv2.imwrite( load_path + FileName + '_' + BackGroundName + '_' + str(i) + ".bmp", img )
