@@ -18,6 +18,7 @@ def populate_train_list(orig_images_path):
     image_list_orig = glob.glob(orig_images_path + "*.bmp")
     for image in image_list_orig:
         image = image.split("/")[-1]
+	print('image path:' + image)
         tmp_img_name.append(image)
 
     train_keys = []
