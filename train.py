@@ -92,7 +92,7 @@ def train(config):
         dehaze_net = net.dehaze_net()
 
     if config.snap_train_data:
-        dehaze_net.load_state_dict(torch.load(config.snapshots_folder + config.snap_train_data))
+        dehaze_net.load_state_dict(torch.load(config.snapshots_train_folder + config.snap_train_data))
     else:
         dehaze_net.apply(weights_init)
     print(dehaze_net)
@@ -383,6 +383,7 @@ if __name__ == "__main__":
     parser.add_argument('--snapshot_iter', type=int, default=10000)
     parser.add_argument('--snapshots_folder', type=str, default="snapshots/")
     parser.add_argument('--sample_output_folder', type=str, default="samples/")
+    parser.add_argument('--snapshots_train_folder', type=str, default="snapshots_train/")
     parser.add_argument('--snap_train_data', type=str, default="")
     parser.add_argument('--use_gpu', type=int, default=0)
     parser.add_argument('--resize', type=int, default=0)
