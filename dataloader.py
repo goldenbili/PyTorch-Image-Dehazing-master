@@ -15,7 +15,7 @@ random.seed(1143)
 
 def populate_train_list(orig_images_path):
     tmp_img_name = []
-    image_list_orig = glob.glob(orig_images_path + "*.bmp")
+    image_list_orig = glob.glob(orig_images_path + "*.png")
     for image in image_list_orig:
         image = image.split("/")[-1]
 	# print('image path:' + image)
