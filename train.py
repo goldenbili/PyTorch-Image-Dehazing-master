@@ -119,81 +119,82 @@ def train(config):
         # 有 iteration 張一起訓練.
         # img_orig , img_haze 是包含 iteration 個圖片的 tensor 資料集 , 訓練時會一口氣訓練 iteration 個圖片.
         # 有點像將圖片橫向拼起來 實際上是不同維度.
-        for iteration, (img_orig, img_haze, rgb, bl_num_width, bl_num_height, data_path) in enumerate(train_loader):
-            if save_counter == 0:
-                print("img_orig.size:")
-                print(len(img_orig))
-                print("bl_num_width.type:")
-                print(bl_num_width.type)
-                print("shape:")
-                print(bl_num_width.shape)
-
-            # train stage
-            num_width = int(bl_num_width[0].item())
-            num_height = int(bl_num_height[0].item())
-            full_bk_num = num_width * num_height
-            display_block_iter = full_bk_num / config.display_block_iter
-            for index in range(len(img_orig)):
-                unit_img_orig = img_orig[index]
-                unit_img_haze = img_haze[index]
+        if opt.do_valid == 0:
+            for iteration, (img_orig, img_haze, rgb, bl_num_width, bl_num_height, data_path) in enumerate(train_loader):
                 if save_counter == 0:
-                    print("unit_img_orig type:")
-                    print(unit_img_orig.type())
-                    print("size:")
-                    print(unit_img_orig.size())
+                    print("img_orig.size:")
+                    print(len(img_orig))
+                    print("bl_num_width.type:")
+                    print(bl_num_width.type)
                     print("shape:")
-                    print(unit_img_orig.shape)
-                '''
-                if bTest == 1:
-                    if save_counter ==0:
-                        numpy_ori = unit_img_orig.numpy().copy()
-                        print("data path:")
-                        print(data_path)
-                        print("index:"+str(index))
+                    print(bl_num_width.shape)
 
-                        for i in range(3):
-                            for j in range(32):
-                                print("before:")
-                                print(numpy_ori[index][i][j])
-                                print("after:")
-                                print(numpy_ori[index][i][j]*255)
-                '''
+                # train stage
+                num_width = int(bl_num_width[0].item())
+                num_height = int(bl_num_height[0].item())
+                full_bk_num = num_width * num_height
+                display_block_iter = full_bk_num / config.display_block_iter
+                for index in range(len(img_orig)):
+                    unit_img_orig = img_orig[index]
+                    unit_img_haze = img_haze[index]
+                    if save_counter == 0:
+                        print("unit_img_orig type:")
+                        print(unit_img_orig.type())
+                        print("size:")
+                        print(unit_img_orig.size())
+                        print("shape:")
+                        print(unit_img_orig.shape)
+                    '''
+                    if bTest == 1:
+                        if save_counter ==0:
+                            numpy_ori = unit_img_orig.numpy().copy()
+                            print("data path:")
+                            print(data_path)
+                            print("index:"+str(index))
 
-                if use_gpu:
-                    unit_img_orig = unit_img_orig.cuda()
-                    unit_img_haze = unit_img_haze.cuda()
+                            for i in range(3):
+                                for j in range(32):
+                                    print("before:")
+                                    print(numpy_ori[index][i][j])
+                                    print("after:")
+                                    print(numpy_ori[index][i][j]*255)
+                    '''
 
-                clean_image = dehaze_net(unit_img_haze)
+                    if use_gpu:
+                        unit_img_orig = unit_img_orig.cuda()
+                        unit_img_haze = unit_img_haze.cuda()
 
-                loss = criterion(clean_image, unit_img_orig)
+                    clean_image = dehaze_net(unit_img_haze)
 
-                if torch.isnan(unit_img_haze).any() or torch.isinf(clean_image).any():
-                    print("unit_img_haze:")
-                    print(unit_img_haze.shape)
-                    print(unit_img_haze)
+                    loss = criterion(clean_image, unit_img_orig)
 
-                    print("clean_image:")
-                    print(clean_image.shape)
-                    print(clean_image)
+                    if torch.isnan(unit_img_haze).any() or torch.isinf(clean_image).any():
+                        print("unit_img_haze:")
+                        print(unit_img_haze.shape)
+                        print(unit_img_haze)
 
-                optimizer.zero_grad()
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(dehaze_net.parameters(), config.grad_clip_norm)
-                optimizer.step()
+                        print("clean_image:")
+                        print(clean_image.shape)
+                        print(clean_image)
 
-                # show loss every config.display_block_iter
-                if ((index + 1) % display_block_iter) == 0:
-                    print("Loss at Epoch:" + str(epoch) + "_index:" + str(index + 1) + "/" + str(len(img_orig)) +
-                          "_iter:" + str(iteration + 1) + "_Loss value:" + str(loss.item()))
-                # save snapshot every save_counter times
-                if ((save_counter + 1) % config.snapshot_iter) == 0:
-                    save_name = "Epoch:" + str(epoch) + "_TrainTimes:" + str(save_counter + 1) + ".pth"
-                    torch.save(dehaze_net.state_dict(), config.snapshots_folder + save_name)
-                    # torch.save(dehaze_net.state_dict(),
-                    #           config.snapshots_folder , "Epoch:", str(epoch), "
-                    #           _TrainTimes:", str(save_counter+1), ".pth")
+                    optimizer.zero_grad()
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(dehaze_net.parameters(), config.grad_clip_norm)
+                    optimizer.step()
 
-                save_counter = save_counter + 1
+                    # show loss every config.display_block_iter
+                    if ((index + 1) % display_block_iter) == 0:
+                        print("Loss at Epoch:" + str(epoch) + "_index:" + str(index + 1) + "/" + str(len(img_orig)) +
+                              "_iter:" + str(iteration + 1) + "_Loss value:" + str(loss.item()))
+                    # save snapshot every save_counter times
+                    if ((save_counter + 1) % config.snapshot_iter) == 0:
+                        save_name = "Epoch:" + str(epoch) + "_TrainTimes:" + str(save_counter + 1) + ".pth"
+                        torch.save(dehaze_net.state_dict(), config.snapshots_folder + save_name)
+                        # torch.save(dehaze_net.state_dict(),
+                        #           config.snapshots_folder , "Epoch:", str(epoch), "
+                        #           _TrainTimes:", str(save_counter+1), ".pth")
+
+                    save_counter = save_counter + 1
 
         # Validation Stage
         # img_orig -> yuv444
@@ -390,6 +391,7 @@ if __name__ == "__main__":
     parser.add_argument('--block_width', type=int, default=32)
     parser.add_argument('--block_height', type=int, default=32)
     parser.add_argument('--bTest', type=int, default=1)
+    parser.add_argument('--do_valid', type=int, default=0)
 
     conf = parser.parse_args()
     print("snapshots_folder:" + conf.snapshots_folder)
